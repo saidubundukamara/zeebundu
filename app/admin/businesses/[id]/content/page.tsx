@@ -28,6 +28,8 @@ import {
   Loader2
 } from "lucide-react";
 import Link from "next/link";
+import { HeroEditor } from "@/components/admin/content-editors/HeroEditor";
+import { GalleryEditor } from "@/components/admin/content-editors/GalleryEditor";
 
 interface ContentSection {
   id: string;
@@ -35,6 +37,48 @@ interface ContentSection {
   title: string;
   content: any;
   isActive: boolean;
+}
+
+interface HeroContent {
+  title: string;
+  subtitle?: string;
+  description: string;
+  backgroundImage?: any;
+  backgroundVideo?: any;
+  overlay: {
+    enabled: boolean;
+    color: string;
+    opacity: number;
+  };
+  textAlign: 'left' | 'center' | 'right';
+  buttons: Array<{
+    id: string;
+    text: string;
+    link: string;
+    style: 'primary' | 'secondary' | 'outline';
+    isVisible: boolean;
+  }>;
+  style: {
+    titleSize: 'sm' | 'md' | 'lg' | 'xl';
+    titleColor: string;
+    descriptionColor: string;
+    backgroundColor: string;
+  };
+}
+
+interface GalleryContent {
+  title: string;
+  description?: string;
+  layout: 'grid' | 'masonry' | 'carousel' | 'lightbox';
+  columns: number;
+  images: Array<{
+    id: string;
+    media: any;
+    caption?: string;
+    alt?: string;
+    isVisible: boolean;
+    order: number;
+  }>;
 }
 
 export default function BusinessContentPage() {
@@ -68,11 +112,37 @@ export default function BusinessContentPage() {
           title: "Hero Section",
           isActive: true,
           content: {
-            headline: "Premium Fuel & Quality Service",
-            subheadline: "Your trusted partner for quality fuel and exceptional automotive services",
-            buttonText: "Visit Us Today",
-            buttonLink: "#contact",
-            backgroundImage: "/images/gas-station-hero.jpg",
+            title: "Premium Fuel & Quality Service",
+            subtitle: "Your trusted partner for quality fuel and exceptional automotive services",
+            description: "Experience top-quality fuel, professional automotive services, and exceptional customer care at QuickFuel Express. We're your neighborhood gas station committed to keeping you moving.",
+            overlay: {
+              enabled: true,
+              color: "#000000",
+              opacity: 50
+            },
+            textAlign: "center" as const,
+            buttons: [
+              {
+                id: "btn-1",
+                text: "Visit Us Today",
+                link: "#contact",
+                style: "primary" as const,
+                isVisible: true
+              },
+              {
+                id: "btn-2",
+                text: "Our Services",
+                link: "#services",
+                style: "outline" as const,
+                isVisible: true
+              }
+            ],
+            style: {
+              titleSize: "lg" as const,
+              titleColor: "#ffffff",
+              descriptionColor: "#e5e7eb",
+              backgroundColor: "#1f2937"
+            }
           }
         },
         {
@@ -134,11 +204,61 @@ export default function BusinessContentPage() {
           isActive: true,
           content: {
             title: "Our Facility",
+            description: "Take a look at our modern facilities and state-of-the-art equipment",
+            layout: "grid" as const,
+            columns: 3,
             images: [
-              { url: "/images/gallery/station-front.jpg", alt: "Station front view", caption: "Modern facilities" },
-              { url: "/images/gallery/car-wash.jpg", alt: "Car wash bay", caption: "Professional car wash" },
-              { url: "/images/gallery/convenience-store.jpg", alt: "Store interior", caption: "24/7 convenience store" },
-              { url: "/images/gallery/fuel-pumps.jpg", alt: "Fuel pumps", caption: "State-of-the-art pumps" }
+              {
+                id: "img-1",
+                media: {
+                  _id: "mock-1",
+                  originalName: "station-front.jpg",
+                  url: "/images/gallery/station-front.jpg",
+                  thumbnailUrl: "/images/gallery/station-front.jpg",
+                  alt: "Station front view",
+                  mimeType: "image/jpeg",
+                  size: 1024000,
+                  dimensions: { width: 800, height: 600 }
+                },
+                caption: "Modern facilities",
+                alt: "Station front view",
+                isVisible: true,
+                order: 0
+              },
+              {
+                id: "img-2",
+                media: {
+                  _id: "mock-2",
+                  originalName: "car-wash.jpg",
+                  url: "/images/gallery/car-wash.jpg",
+                  thumbnailUrl: "/images/gallery/car-wash.jpg",
+                  alt: "Car wash bay",
+                  mimeType: "image/jpeg",
+                  size: 1024000,
+                  dimensions: { width: 800, height: 600 }
+                },
+                caption: "Professional car wash",
+                alt: "Car wash bay",
+                isVisible: true,
+                order: 1
+              },
+              {
+                id: "img-3",
+                media: {
+                  _id: "mock-3",
+                  originalName: "convenience-store.jpg",
+                  url: "/images/gallery/convenience-store.jpg",
+                  thumbnailUrl: "/images/gallery/convenience-store.jpg",
+                  alt: "Store interior",
+                  mimeType: "image/jpeg",
+                  size: 1024000,
+                  dimensions: { width: 800, height: 600 }
+                },
+                caption: "24/7 convenience store",
+                alt: "Store interior",
+                isVisible: true,
+                order: 2
+              }
             ]
           }
         },
@@ -227,72 +347,31 @@ export default function BusinessContentPage() {
   };
 
   const renderHeroEditor = (section: ContentSection) => (
-    <div className="space-y-4">
-      <div>
-        <label className="text-sm font-medium">Headline</label>
-        <Input
-          value={section.content.headline}
-          onChange={(e) => {
-            const newContent = { ...section.content, headline: e.target.value };
-            setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
-          }}
-          placeholder="Enter headline"
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium">Subheadline</label>
-        <Textarea
-          value={section.content.subheadline}
-          onChange={(e) => {
-            const newContent = { ...section.content, subheadline: e.target.value };
-            setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
-          }}
-          placeholder="Enter subheadline"
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-medium">Button Text</label>
-          <Input
-            value={section.content.buttonText}
-            onChange={(e) => {
-              const newContent = { ...section.content, buttonText: e.target.value };
-              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
-            }}
-            placeholder="Button text"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium">Button Link</label>
-          <Input
-            value={section.content.buttonLink}
-            onChange={(e) => {
-              const newContent = { ...section.content, buttonLink: e.target.value };
-              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
-            }}
-            placeholder="Button link"
-          />
-        </div>
-      </div>
-      <div>
-        <label className="text-sm font-medium">Background Image URL</label>
-        <Input
-          value={section.content.backgroundImage}
-          onChange={(e) => {
-            const newContent = { ...section.content, backgroundImage: e.target.value };
-            setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
-          }}
-          placeholder="Image URL"
-        />
-      </div>
-      <Button 
-        onClick={() => saveSection(section.id, section.content)}
-        disabled={isSaving}
-      >
-        {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-        Save Hero Section
-      </Button>
-    </div>
+    <HeroEditor
+      content={section.content as HeroContent}
+      onChange={(newContent) => {
+        setSections(prev => prev.map(s => 
+          s.id === section.id ? { ...s, content: newContent } : s
+        ));
+      }}
+      businessId={businessId}
+      onSave={() => saveSection(section.id, section.content)}
+      isSaving={isSaving}
+    />
+  );
+
+  const renderGalleryEditor = (section: ContentSection) => (
+    <GalleryEditor
+      content={section.content as GalleryContent}
+      onChange={(newContent) => {
+        setSections(prev => prev.map(s => 
+          s.id === section.id ? { ...s, content: newContent } : s
+        ));
+      }}
+      businessId={businessId}
+      onSave={() => saveSection(section.id, section.content)}
+      isSaving={isSaving}
+    />
   );
 
   const renderAboutEditor = (section: ContentSection) => (
@@ -578,12 +657,13 @@ export default function BusinessContentPage() {
                 {section.type === "hero" && renderHeroEditor(section)}
                 {section.type === "about" && renderAboutEditor(section)}
                 {section.type === "services" && renderServicesEditor(section)}
+                {section.type === "gallery" && renderGalleryEditor(section)}
                 {section.type === "contact" && renderContactEditor(section)}
-                {(section.type === "gallery" || section.type === "testimonials") && (
+                {section.type === "testimonials" && (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      {section.type === "gallery" ? "Gallery" : "Testimonials"} editor coming soon. 
+                      Testimonials editor coming soon. 
                       This section is currently managed automatically.
                     </AlertDescription>
                   </Alert>

@@ -27,6 +27,8 @@ export interface MediaMetadata {
   description?: string;
   category?: string;
   optimization?: OptimizationSettings;
+  cloudinaryPublicId?: string;
+  cloudinaryUrl?: string;
 }
 
 export interface OptimizationSettings {

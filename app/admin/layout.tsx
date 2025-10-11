@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AdminSidebar } from "@/components/admin/layout/admin-sidebar";
 import { AdminHeader } from "@/components/admin/layout/admin-header";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 export default function AdminLayout({
   children,
@@ -56,6 +56,7 @@ export default function AdminLayout({
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="p-0 w-64">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           <AdminSidebar />
         </SheetContent>
       </Sheet>

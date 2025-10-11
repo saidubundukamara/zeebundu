@@ -20,20 +20,43 @@ export function AdminBreadcrumb() {
     const pathSegments = pathname.split("/").filter(Boolean);
     const breadcrumbs = [];
     
-    // Always start with Dashboard
-    breadcrumbs.push({
-      label: "Dashboard",
-      href: "/admin/dashboard",
-      isActive: pathname === "/admin/dashboard",
-    });
+    // Handle root admin path
+    if (pathname === "/admin" || pathname === "/admin/") {
+      return [{
+        label: "Dashboard",
+        href: "/admin/dashboard",
+        isActive: true,
+      }];
+    }
     
     // Skip "admin" segment and process the rest
     const relevantSegments = pathSegments.slice(1);
+    
+    // If we're on dashboard, just return dashboard
+    if (relevantSegments.length === 0 || (relevantSegments.length === 1 && relevantSegments[0] === "dashboard")) {
+      return [{
+        label: "Dashboard",
+        href: "/admin/dashboard",
+        isActive: true,
+      }];
+    }
+    
+    // Always start with Dashboard (not active)
+    breadcrumbs.push({
+      label: "Dashboard",
+      href: "/admin/dashboard",
+      isActive: false,
+    });
     
     for (let i = 0; i < relevantSegments.length; i++) {
       const segment = relevantSegments[i];
       const href = "/admin/" + relevantSegments.slice(0, i + 1).join("/");
       const isLast = i === relevantSegments.length - 1;
+      
+      // Skip dashboard segment since we already added it
+      if (segment === "dashboard") {
+        continue;
+      }
       
       // Format the label
       let label = segment;
@@ -92,7 +115,7 @@ export function AdminBreadcrumb() {
     <Breadcrumb>
       <BreadcrumbList>
         {breadcrumbs.map((crumb, index) => (
-          <div key={crumb.href} className="flex items-center">
+          <div key={`${index}-${crumb.href}`} className="flex items-center">
             <BreadcrumbItem>
               {crumb.isActive ? (
                 <BreadcrumbPage className="font-medium">
