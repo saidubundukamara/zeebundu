@@ -1,0 +1,86 @@
+
+> zeebundu@0.1.0 dev
+> next dev --turbopack
+
+
+✘ next.js v15.5.4 is not yet supported in the Community edition of Console Ninja.
+We are working hard on it for you https://tinyurl.com/3h9mtwra.
+
+Estimated release dates:
+  - Community users: around 23rd November, 2025 (subject to team availability)
+  - PRO users:       priority access is available now
+
+
+✘ next.js v15.5.4 is not yet supported in the Community edition of Console Ninja.
+We are working hard on it for you https://tinyurl.com/3h9mtwra.
+
+Estimated release dates:
+  - Community users: around 23rd November, 2025 (subject to team availability)
+  - PRO users:       priority access is available now
+
+   ▲ Next.js 15.5.4 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.88:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 946ms
+ ○ Compiling /business/[slug] ...
+ ✓ Compiled /business/[slug] in 2.5s
+ ⨯ ReferenceError: ConciergeBell is not defined
+    at HotelTemplate (components/business-templates/HotelTemplate.tsx:247:63)
+  245 |       { value: '500+', label: 'Guest Rooms', icon: <Bed className="w-6 h-6" /> },
+  246 |       { value: '4.8', label: 'Average Rating', icon: <Star className="w-6 h-6" /> },
+> 247 |       { value: '24/7', label: 'ConciergeBell Service', icon: <ConciergeBell className="w-6 h-6" /> }
+      |                                                               ^
+  248 |     ],
+  249 |     theme: 'from-emerald-500 to-teal-500'
+  250 |   }; {
+  digest: '2016257132'
+}
+ GET /business/grand-resort-spa 500 in 7813ms
+ ⨯ ReferenceError: ConciergeBell is not defined
+    at HotelTemplate (components/business-templates/HotelTemplate.tsx:247:59)
+  245 |       { value: '500+', label: 'Guest Rooms', icon: <Bed className="w-6 h-6" /> },
+  246 |       { value: '4.8', label: 'Average Rating', icon: <Star className="w-6 h-6" /> },
+> 247 |       { value: '24/7', label: 'Concierge Service', icon: <ConciergeBell className="w-6 h-6" /> }
+      |                                                           ^
+  248 |     ],
+  249 |     theme: 'from-emerald-500 to-teal-500'
+  250 |   }; {
+  digest: '2016257132'
+}
+ GET /business/grand-resort-spa 500 in 5403ms
+ GET /business/grand-resort-spa 200 in 4615ms
+ ✓ Compiled /api/businesses in 481ms
+ POST /api/businesses 201 in 4719ms
+ POST /api/businesses 400 in 258ms
+ POST /api/businesses 201 in 798ms
+ GET /business/green-valley-organic-farm 200 in 661ms
+ GET /business/healthcare-plus-pharmacy 200 in 704ms
+ ✓ Compiled in 137ms
+ ✓ Compiled in 58ms
+ ✓ Compiled in 345ms
+ ○ Compiling / ...
+ ✓ Compiled / in 748ms
+ GET / 200 in 947ms
+ ✓ Compiled in 384ms
+ ✓ Compiled in 253ms
+ ✓ Compiled / in 26ms
+ GET / 200 in 806ms
+ ✓ Compiled /business/[slug] in 59ms
+ GET /business/bluefuel-gas-station 200 in 7566ms
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+Error: connect ECONNREFUSED 127.0.0.1:54932
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1636:16) {
+  errno: -61,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 54932
+}
+
+Node.js v23.11.0
