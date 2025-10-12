@@ -87,6 +87,8 @@ export default function BusinessContentPage() {
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dbConnectionWarning, setDbConnectionWarning] = useState(false);
   const [business, setBusiness] = useState<any>(null);
   const [sections, setSections] = useState<ContentSection[]>([]);
   const [activeTab, setActiveTab] = useState("hero");
@@ -96,251 +98,232 @@ export default function BusinessContentPage() {
   }, [businessId]);
 
   const fetchBusinessContent = async () => {
+    setIsLoading(true);
+    let businessData: any = null;
+    
     try {
-      // Mock data for now
-      const mockBusiness = {
-        id: businessId,
-        name: "QuickFuel Express",
-        slug: "quickfuel-express",
-        template: "gas-station",
-      };
+      // Try to fetch business details
+      const businessResponse = await fetch(`/api/businesses/${businessId}`);
+      if (businessResponse.ok) {
+        const businessResult = await businessResponse.json();
+        if (businessResult.success) {
+          businessData = businessResult.data;
+          setBusiness(businessData);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to fetch business data, using fallback:', error);
+      setDbConnectionWarning(true);
+    }
 
-      const mockSections: ContentSection[] = [
-        {
-          id: "hero",
-          type: "hero",
-          title: "Hero Section",
-          isActive: true,
-          content: {
-            title: "Premium Fuel & Quality Service",
-            subtitle: "Your trusted partner for quality fuel and exceptional automotive services",
-            description: "Experience top-quality fuel, professional automotive services, and exceptional customer care at QuickFuel Express. We're your neighborhood gas station committed to keeping you moving.",
-            overlay: {
-              enabled: true,
-              color: "#000000",
-              opacity: 50
+    // If no business data available, create mock business for content editing
+    if (!businessData) {
+      businessData = {
+        _id: businessId,
+        name: 'Business Name (Edit Me)',
+        slug: 'business-name',
+        description: 'Business description goes here...',
+        template: 'gas-station',
+        status: 'active',
+        contact: {
+          phone: '(555) 123-4567',
+          email: 'contact@business.com',
+          address: '123 Main St, City, State 12345'
+        },
+        branding: {
+          primaryColor: '#3B82F6',
+          secondaryColor: '#06B6D4'
+        },
+        socialMedia: {},
+        hours: {
+          'Monday - Friday': '9:00 AM - 5:00 PM',
+          'Saturday': '10:00 AM - 4:00 PM',
+          'Sunday': 'Closed'
+        }
+      };
+      setBusiness(businessData);
+    }
+
+    // Try to fetch business content
+    try {
+      const contentResponse = await fetch(`/api/businesses/${businessId}/content`);
+      if (contentResponse.ok) {
+        const contentResult = await contentResponse.json();
+        if (contentResult.success && contentResult.data && contentResult.data.length > 0) {
+          setSections(contentResult.data);
+          setIsLoading(false);
+          return;
+        }
+      }
+    } catch (contentError) {
+      console.warn('Content API not available, using default sections:', contentError);
+      setDbConnectionWarning(true);
+    }
+
+    // Create default sections
+    const defaultSections: ContentSection[] = [
+      {
+        id: "hero",
+        type: "hero",
+        title: "Hero Section",
+        isActive: true,
+        content: {
+          title: `Welcome to ${businessData.name}`,
+          subtitle: businessData.description || "Your trusted partner for quality service",
+          description: businessData.description || `Experience exceptional service at ${businessData.name}. We're committed to providing you with the best possible experience.`,
+          overlay: {
+            enabled: true,
+            color: "#000000",
+            opacity: 50
+          },
+          textAlign: "center" as const,
+          buttons: [
+            {
+              id: "btn-1",
+              text: "Contact Us",
+              link: "#contact",
+              style: "primary" as const,
+              isVisible: true
             },
-            textAlign: "center" as const,
-            buttons: [
-              {
-                id: "btn-1",
-                text: "Visit Us Today",
-                link: "#contact",
-                style: "primary" as const,
-                isVisible: true
-              },
-              {
-                id: "btn-2",
-                text: "Our Services",
-                link: "#services",
-                style: "outline" as const,
-                isVisible: true
-              }
-            ],
-            style: {
-              titleSize: "lg" as const,
-              titleColor: "#ffffff",
-              descriptionColor: "#e5e7eb",
-              backgroundColor: "#1f2937"
+            {
+              id: "btn-2",
+              text: "Our Services",
+              link: "#services",
+              style: "outline" as const,
+              isVisible: true
             }
-          }
-        },
-        {
-          id: "about",
-          type: "about",
-          title: "About Section",
-          isActive: true,
-          content: {
-            title: "About QuickFuel Express",
-            description: "For over 20 years, QuickFuel Express has been serving the community with premium gasoline, diesel, and comprehensive automotive services. We pride ourselves on cleanliness, safety, and customer satisfaction.",
-            features: [
-              "Premium fuel grades",
-              "24/7 convenience store",
-              "Professional car wash",
-              "Automotive maintenance"
-            ],
-            stats: [
-              { label: "Years in Business", value: "20+" },
-              { label: "Happy Customers", value: "50,000+" },
-              { label: "Fuel Quality", value: "Premium" },
-              { label: "Service Rating", value: "5-Star" }
-            ]
-          }
-        },
-        {
-          id: "services",
-          type: "services",
-          title: "Services Section",
-          isActive: true,
-          content: {
-            title: "Our Services",
-            description: "Complete automotive solutions for your convenience",
-            services: [
-              {
-                name: "Premium Fuel",
-                description: "High-quality gasoline and diesel fuel",
-                icon: "fuel",
-                features: ["Regular", "Premium", "Diesel", "Ethanol-free"]
-              },
-              {
-                name: "Car Wash",
-                description: "Professional automated car wash services",
-                icon: "wash",
-                features: ["Basic wash", "Premium detail", "Wax service", "Interior cleaning"]
-              },
-              {
-                name: "Convenience Store",
-                description: "24/7 convenience store with essentials",
-                icon: "store",
-                features: ["Snacks & drinks", "Automotive supplies", "Personal care", "Hot food"]
-              }
-            ]
-          }
-        },
-        {
-          id: "gallery",
-          type: "gallery",
-          title: "Gallery Section",
-          isActive: true,
-          content: {
-            title: "Our Facility",
-            description: "Take a look at our modern facilities and state-of-the-art equipment",
-            layout: "grid" as const,
-            columns: 3,
-            images: [
-              {
-                id: "img-1",
-                media: {
-                  _id: "mock-1",
-                  originalName: "station-front.jpg",
-                  url: "/images/gallery/station-front.jpg",
-                  thumbnailUrl: "/images/gallery/station-front.jpg",
-                  alt: "Station front view",
-                  mimeType: "image/jpeg",
-                  size: 1024000,
-                  dimensions: { width: 800, height: 600 }
-                },
-                caption: "Modern facilities",
-                alt: "Station front view",
-                isVisible: true,
-                order: 0
-              },
-              {
-                id: "img-2",
-                media: {
-                  _id: "mock-2",
-                  originalName: "car-wash.jpg",
-                  url: "/images/gallery/car-wash.jpg",
-                  thumbnailUrl: "/images/gallery/car-wash.jpg",
-                  alt: "Car wash bay",
-                  mimeType: "image/jpeg",
-                  size: 1024000,
-                  dimensions: { width: 800, height: 600 }
-                },
-                caption: "Professional car wash",
-                alt: "Car wash bay",
-                isVisible: true,
-                order: 1
-              },
-              {
-                id: "img-3",
-                media: {
-                  _id: "mock-3",
-                  originalName: "convenience-store.jpg",
-                  url: "/images/gallery/convenience-store.jpg",
-                  thumbnailUrl: "/images/gallery/convenience-store.jpg",
-                  alt: "Store interior",
-                  mimeType: "image/jpeg",
-                  size: 1024000,
-                  dimensions: { width: 800, height: 600 }
-                },
-                caption: "24/7 convenience store",
-                alt: "Store interior",
-                isVisible: true,
-                order: 2
-              }
-            ]
-          }
-        },
-        {
-          id: "testimonials",
-          type: "testimonials",
-          title: "Testimonials Section",
-          isActive: true,
-          content: {
-            title: "What Our Customers Say",
-            testimonials: [
-              {
-                id: "1",
-                name: "John Smith",
-                rating: 5,
-                comment: "Best gas station in town! Clean facilities and friendly staff.",
-                date: "2024-01-15"
-              },
-              {
-                id: "2",
-                name: "Sarah Johnson",
-                rating: 5,
-                comment: "Love the car wash service. My car always looks brand new!",
-                date: "2024-01-10"
-              },
-              {
-                id: "3",
-                name: "Mike Wilson",
-                rating: 5,
-                comment: "Convenient location and great prices. Highly recommended!",
-                date: "2024-01-08"
-              }
-            ]
-          }
-        },
-        {
-          id: "contact",
-          type: "contact",
-          title: "Contact Section",
-          isActive: true,
-          content: {
-            title: "Visit Us Today",
-            address: "123 Main Street, Springfield, CA 90210",
-            phone: "(555) 123-4567",
-            email: "contact@quickfuel.com",
-            hours: {
-              "Monday - Friday": "6:00 AM - 11:00 PM",
-              "Saturday": "7:00 AM - 11:00 PM",
-              "Sunday": "8:00 AM - 10:00 PM"
-            },
-            socialMedia: {
-              facebook: "https://facebook.com/quickfuel",
-              instagram: "@quickfuelexpress",
-              twitter: "@quickfuel"
-            }
+          ],
+          style: {
+            titleSize: "lg" as const,
+            titleColor: "#ffffff",
+            descriptionColor: "#e5e7eb",
+            backgroundColor: "#1f2937"
           }
         }
-      ];
+      },
+      {
+        id: "about",
+        type: "about",
+        title: "About Section",
+        isActive: true,
+        content: {
+          title: `About ${businessData.name}`,
+          description: businessData.description || "Learn more about our business and what makes us special.",
+          features: [
+            "Quality service",
+            "Professional staff",
+            "Competitive prices",
+            "Customer satisfaction"
+          ],
+          stats: [
+            { label: "Years in Business", value: "1+" },
+            { label: "Happy Customers", value: "100+" },
+            { label: "Service Quality", value: "Premium" },
+            { label: "Customer Rating", value: "5-Star" }
+          ]
+        }
+      },
+      {
+        id: "services",
+        type: "services",
+        title: "Services Section",
+        isActive: true,
+        content: {
+          title: "Our Services",
+          description: "Discover what we have to offer",
+          services: [
+            {
+              name: "Primary Service",
+              description: "Our main service offering",
+              icon: "service",
+              features: ["Feature 1", "Feature 2", "Feature 3"]
+            }
+          ]
+        }
+      },
+      {
+        id: "gallery",
+        type: "gallery",
+        title: "Gallery Section",
+        isActive: true,
+        content: {
+          title: "Our Gallery",
+          description: "Take a look at our work and facilities",
+          layout: "grid" as const,
+          columns: 3,
+          images: []
+        }
+      },
+      {
+        id: "testimonials",
+        type: "testimonials",
+        title: "Testimonials Section",
+        isActive: true,
+        content: {
+          title: "What Our Customers Say",
+          testimonials: []
+        }
+      },
+      {
+        id: "contact",
+        type: "contact",
+        title: "Contact Section",
+        isActive: true,
+        content: {
+          title: "Contact Us",
+          address: businessData.contact?.address || "Address not provided",
+          phone: businessData.contact?.phone || "Phone not provided",
+          email: businessData.contact?.email || "Email not provided",
+          hours: businessData.hours || {
+            "Monday - Friday": "9:00 AM - 5:00 PM",
+            "Saturday": "10:00 AM - 4:00 PM",
+            "Sunday": "Closed"
+          },
+          socialMedia: businessData.socialMedia || {}
+        }
+      }
+    ];
 
-      setBusiness(mockBusiness);
-      setSections(mockSections);
-    } catch (error) {
-      console.error("Error fetching business content:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    setSections(defaultSections);
+    setIsLoading(false);
   };
 
   const saveSection = async (sectionId: string, content: any) => {
     setIsSaving(true);
     try {
-      // Update local state
+      // Update local state optimistically
       setSections(prev => prev.map(section => 
         section.id === sectionId ? { ...section, content } : section
       ));
 
-      // In a real app, this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save to API
+      const response = await fetch(`/api/businesses/${businessId}/content/${sectionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save section');
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save section');
+      }
       
-      console.log("Saved section:", sectionId, content);
+      console.log("Successfully saved section:", sectionId);
     } catch (error) {
       console.error("Error saving section:", error);
+      // Don't revert local state - keep the changes for editing
+      // Just show a warning about the save failure
+      if (dbConnectionWarning) {
+        console.log('Save skipped: Database connection not available (development mode)');
+      } else {
+        alert('Failed to save changes to database. Your edits are preserved locally but may be lost on page refresh.');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -574,6 +557,33 @@ export default function BusinessContentPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center max-w-md">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Error Loading Content</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={() => {
+              setError(null);
+              setIsLoading(true);
+              fetchBusinessContent();
+            }}>
+              Try Again
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/admin/businesses">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Businesses
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -605,6 +615,17 @@ export default function BusinessContentPage() {
           </Button>
         </div>
       </div>
+
+      {/* Database Connection Warning */}
+      {dbConnectionWarning && (
+        <Alert className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Development Mode:</strong> Database connection not available. You can still edit content, but changes won't be saved until database is configured. 
+            Create a <code>.env.local</code> file with <code>MONGODB_URI</code> to enable data persistence.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Content Editor */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

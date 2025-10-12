@@ -25,9 +25,9 @@ const businessSchema = z.object({
   email: z.string().email("Please enter a valid email"),
   phone: z.string().min(1, "Phone number is required"),
   address: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(1, "State is required"),
-  zipCode: z.string().min(1, "ZIP code is required"),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
   website: z.string().url("Please enter a valid website URL").optional().or(z.literal("")),
   isActive: z.boolean().default(true),
   primaryColor: z.string().default("#3b82f6"),
@@ -151,45 +151,29 @@ export default function CreateBusinessPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Business Name</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Enter business name"
-                              {...field}
-                              onChange={(e) => {
-                                field.onChange(e);
-                                handleNameChange(e.target.value);
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>URL Slug</FormLabel>
-                          <FormControl>
-                            <Input placeholder="business-name" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            This will be used in the business URL
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Business Name</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter business name"
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              handleNameChange(e.target.value);
+                            }}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          The business URL will be automatically generated from this name
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}

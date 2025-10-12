@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  ArrowRight, Star, MapPin, Clock, Users, Award, TrendingUp, 
-  Fuel, Hotel, Wheat, Pill, ShoppingBag, Car, Coffee, Building,
-  Heart, Shield, Zap, Sparkles, Globe, Phone, Mail
+  ArrowRight, Fuel, Hotel, Wheat, Pill, ShoppingBag, Car, Coffee, Building,
+  Heart, Sparkles, Globe
 } from 'lucide-react';
+import { Business as DatabaseBusiness } from '@/lib/types';
 
-interface Business {
+interface BusinessCard {
   id: string;
   title: string;
   icon: React.ReactNode;
@@ -21,107 +21,142 @@ interface Business {
   industry: string;
 }
 
-const businesses: Business[] = [
-  {
-    id: 'gas-stations',
-    title: 'Gas Stations',
-    icon: <Fuel className="w-8 h-8" />,
-    path: '/business/bluefuel-gas-station',
-    description: 'Premium fuel and automotive services',
-    gradient: 'from-blue-500 to-cyan-500',
-    borderColor: 'border-blue-500/20',
-    backgroundImage: 'https://images.unsplash.com/photo-1545558014-8692077e9b5c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    size: 'large',
-    industry: 'Automotive'
-  },
-  {
-    id: 'hotels-resorts',
-    title: 'Hotels & Resorts',
-    icon: <Hotel className="w-8 h-8" />,
-    path: '/business/grand-resort-spa',
-    description: 'Luxury accommodations and spa experiences',
-    gradient: 'from-emerald-500 to-teal-500',
-    borderColor: 'border-emerald-500/20',
-    backgroundImage: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    size: 'large',
-    industry: 'Hospitality'
-  },
-  {
-    id: 'farming',
-    title: 'Organic Farming',
-    icon: <Wheat className="w-8 h-8" />,
-    path: '/business/green-valley-organic-farm',
-    description: 'Sustainable agriculture and fresh produce',
-    gradient: 'from-green-500 to-emerald-500',
-    borderColor: 'border-green-500/20',
-    backgroundImage: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    size: 'medium',
-    industry: 'Agriculture'
-  },
-  {
-    id: 'pharmacy',
-    title: 'Pharmacy & Healthcare',
-    icon: <Pill className="w-8 h-8" />,
-    path: '/business/healthcare-plus-pharmacy',
-    description: 'Professional pharmaceutical services',
-    gradient: 'from-red-500 to-pink-500',
-    borderColor: 'border-red-500/20',
-    backgroundImage: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    size: 'medium',
-    industry: 'Healthcare'
-  },
-  {
-    id: 'retail',
-    title: 'Retail Stores',
-    icon: <ShoppingBag className="w-8 h-8" />,
-    path: '/services/retail',
-    description: 'Modern shopping experiences',
-    gradient: 'from-purple-500 to-indigo-500',
-    borderColor: 'border-purple-500/20',
-    backgroundImage: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    size: 'tall',
-    industry: 'Retail'
-  },
-  {
-    id: 'automotive',
-    title: 'Auto Services',
-    icon: <Car className="w-8 h-8" />,
-    path: '/services/automotive',
-    description: 'Complete automotive care',
-    gradient: 'from-orange-500 to-red-500',
-    borderColor: 'border-orange-500/20',
-    backgroundImage: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    size: 'medium',
-    industry: 'Automotive'
-  },
-  {
-    id: 'restaurants',
-    title: 'Restaurants',
-    icon: <Coffee className="w-8 h-8" />,
-    path: '/services/restaurants',
-    description: 'Culinary excellence and dining',
-    gradient: 'from-amber-500 to-orange-500',
-    borderColor: 'border-amber-500/20',
-    backgroundImage: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    size: 'medium',
-    industry: 'Food & Beverage'
-  },
-  {
-    id: 'real-estate',
-    title: 'Real Estate',
-    icon: <Building className="w-8 h-8" />,
-    path: '/services/real-estate',
-    description: 'Property management and sales',
-    gradient: 'from-slate-600 to-slate-800',
-    borderColor: 'border-slate-500/20',
-    backgroundImage: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    size: 'tall',
-    industry: 'Real Estate'
-  }
-];
+// Helper function to get icon based on template/industry
+function getBusinessIcon(template: string, industry: string): React.ReactNode {
+  const iconMap: Record<string, React.ReactNode> = {
+    'gas-station': <Fuel className="w-8 h-8" />,
+    'hotel': <Hotel className="w-8 h-8" />,
+    'hotel-resort': <Hotel className="w-8 h-8" />,
+    'farming': <Wheat className="w-8 h-8" />,
+    'agriculture': <Wheat className="w-8 h-8" />,
+    'pharmacy': <Pill className="w-8 h-8" />,
+    'healthcare': <Pill className="w-8 h-8" />,
+    'retail': <ShoppingBag className="w-8 h-8" />,
+    'automotive': <Car className="w-8 h-8" />,
+    'restaurant': <Coffee className="w-8 h-8" />,
+    'food': <Coffee className="w-8 h-8" />,
+    'real-estate': <Building className="w-8 h-8" />,
+    'hospitality': <Hotel className="w-8 h-8" />
+  };
+  
+  return iconMap[template] || iconMap[industry.toLowerCase().replace(' ', '-')] || <Building className="w-8 h-8" />;
+}
+
+// Helper function to get gradient based on template/industry
+function getBusinessGradient(template: string, industry: string): string {
+  const gradientMap: Record<string, string> = {
+    'gas-station': 'from-blue-500 to-cyan-500',
+    'hotel': 'from-emerald-500 to-teal-500',
+    'hotel-resort': 'from-emerald-500 to-teal-500',
+    'farming': 'from-green-500 to-emerald-500',
+    'agriculture': 'from-green-500 to-emerald-500',
+    'pharmacy': 'from-red-500 to-pink-500',
+    'healthcare': 'from-red-500 to-pink-500',
+    'retail': 'from-purple-500 to-indigo-500',
+    'automotive': 'from-orange-500 to-red-500',
+    'restaurant': 'from-amber-500 to-orange-500',
+    'food': 'from-amber-500 to-orange-500',
+    'real-estate': 'from-slate-600 to-slate-800',
+    'hospitality': 'from-emerald-500 to-teal-500'
+  };
+  
+  return gradientMap[template] || gradientMap[industry.toLowerCase().replace(' ', '-')] || 'from-blue-500 to-cyan-500';
+}
+
+// Helper function to get border color based on template/industry  
+function getBusinessBorderColor(template: string, industry: string): string {
+  const borderColorMap: Record<string, string> = {
+    'gas-station': 'border-blue-500/20',
+    'hotel': 'border-emerald-500/20',
+    'hotel-resort': 'border-emerald-500/20',
+    'farming': 'border-green-500/20',
+    'agriculture': 'border-green-500/20',
+    'pharmacy': 'border-red-500/20',
+    'healthcare': 'border-red-500/20',
+    'retail': 'border-purple-500/20',
+    'automotive': 'border-orange-500/20',
+    'restaurant': 'border-amber-500/20',
+    'food': 'border-amber-500/20',
+    'real-estate': 'border-slate-500/20',
+    'hospitality': 'border-emerald-500/20'
+  };
+  
+  return borderColorMap[template] || borderColorMap[industry.toLowerCase().replace(' ', '-')] || 'border-blue-500/20';
+}
+
+// Helper function to get background image based on template/industry
+function getBusinessBackgroundImage(template: string, industry: string): string {
+  const imageMap: Record<string, string> = {
+    'gas-station': 'https://images.unsplash.com/photo-1545558014-8692077e9b5c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'hotel': 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'hotel-resort': 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'farming': 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'agriculture': 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'pharmacy': 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'healthcare': 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'retail': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'automotive': 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'restaurant': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'food': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'real-estate': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'hospitality': 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  };
+  
+  return imageMap[template] || imageMap[industry.toLowerCase().replace(' ', '-')] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+}
+
+// Helper function to assign sizes in a pattern
+function getBusinessSize(index: number): 'large' | 'medium' | 'tall' {
+  const patterns = ['large', 'large', 'medium', 'medium', 'tall', 'medium', 'medium', 'tall'];
+  return patterns[index % patterns.length] as 'large' | 'medium' | 'tall';
+}
+
+// Helper function to transform database business to display format
+function transformBusinessForDisplay(businesses: DatabaseBusiness[]): BusinessCard[] {
+  return businesses.map((business, index) => ({
+    id: business.slug,
+    title: business.name,
+    icon: getBusinessIcon(business.template, business.industry),
+    path: `/business/${business.slug}`,
+    description: business.description,
+    gradient: getBusinessGradient(business.template, business.industry),
+    borderColor: getBusinessBorderColor(business.template, business.industry),
+    backgroundImage: getBusinessBackgroundImage(business.template, business.industry),
+    size: getBusinessSize(index),
+    industry: business.industry
+  }));
+}
 
 export default function HomePage() {
   const [visibleSections, setVisibleSections] = useState(new Set<string>());
+  const [businesses, setBusinesses] = useState<BusinessCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch businesses from API
+  useEffect(() => {
+    async function fetchBusinesses() {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/businesses?status=active');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const transformedBusinesses = transformBusinessForDisplay(result.data);
+          setBusinesses(transformedBusinesses);
+        } else {
+          setError(result.error || 'Failed to load businesses');
+        }
+      } catch (err) {
+        setError('Failed to load businesses');
+        console.error('Error fetching businesses:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchBusinesses();
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -187,12 +222,16 @@ export default function HomePage() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-2">15+</div>
-              <div className="text-sm text-white/70">Business Types</div>
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">
+                {!loading ? `${businesses.length}+` : '...'}
+              </div>
+              <div className="text-sm text-white/70">Active Businesses</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-2">50+</div>
-              <div className="text-sm text-white/70">Locations</div>
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">
+                {!loading ? `${new Set(businesses.map(b => b.industry)).size}+` : '...'}
+              </div>
+              <div className="text-sm text-white/70">Industries</div>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-white mb-2">24/7</div>
@@ -257,8 +296,36 @@ export default function HomePage() {
             </p>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center py-20">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading businesses...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="text-center py-20">
+              <div className="max-w-md mx-auto">
+                <div className="text-red-600 text-6xl mb-4">⚠️</div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h3>
+                <p className="text-gray-600 mb-6">{error}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          {!loading && !error && businesses.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             {businesses.map((business, index) => (
               <Link
                 key={business.id}
@@ -317,7 +384,19 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               </Link>
             ))}
-          </div>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && businesses.length === 0 && (
+            <div className="text-center py-20">
+              <div className="max-w-md mx-auto">
+                <div className="text-gray-400 text-6xl mb-4">🏢</div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">No businesses found</h3>
+                <p className="text-gray-600">Check back later for new business listings.</p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -348,12 +427,16 @@ export default function HomePage() {
 
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div className="text-center p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
-                  <div className="text-3xl font-bold text-blue-400 mb-2">15+</div>
+                  <div className="text-3xl font-bold text-blue-400 mb-2">
+                    {!loading ? `${new Set(businesses.map(b => b.industry)).size}+` : '...'}
+                  </div>
                   <div className="text-sm text-gray-400">Business Sectors</div>
                 </div>
                 <div className="text-center p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
-                  <div className="text-3xl font-bold text-emerald-400 mb-2">50+</div>
-                  <div className="text-sm text-gray-400">Locations</div>
+                  <div className="text-3xl font-bold text-emerald-400 mb-2">
+                    {!loading ? `${businesses.length}+` : '...'}
+                  </div>
+                  <div className="text-sm text-gray-400">Businesses</div>
                 </div>
               </div>
 

@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Save, Eye, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { Business as DatabaseBusiness } from "@/lib/types";
 
 const businessSchema = z.object({
   name: z.string().min(2, "Business name must be at least 2 characters"),
@@ -25,13 +26,13 @@ const businessSchema = z.object({
   email: z.string().email("Please enter a valid email"),
   phone: z.string().min(1, "Phone number is required"),
   address: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(1, "State is required"),
-  zipCode: z.string().min(1, "ZIP code is required"),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
   website: z.string().url("Please enter a valid website URL").optional().or(z.literal("")),
-  isActive: z.boolean().default(true),
-  primaryColor: z.string().default("#3b82f6"),
-  secondaryColor: z.string().default("#ef4444"),
+  isActive: z.boolean(),
+  primaryColor: z.string(),
+  secondaryColor: z.string(),
 });
 
 type BusinessFormData = z.infer<typeof businessSchema>;
@@ -54,6 +55,101 @@ const industries = [
   { value: "professional-services", label: "Professional Services" },
 ];
 
+// Transform database business to form format
+function transformBusinessForEdit(business: DatabaseBusiness): BusinessFormData {
+  // Extract valid website URL from social media
+  const getWebsiteFromSocialMedia = (): string => {
+    if (business.socialMedia?.facebook) {
+      try {
+        new URL(business.socialMedia.facebook);
+        return business.socialMedia.facebook;
+      } catch {
+        return '';
+      }
+    }
+    return '';
+  };
+
+  return {
+    name: business.name,
+    slug: business.slug,
+    description: business.description,
+    industry: business.industry,
+    template: business.template,
+    email: business.contact?.email || '',
+    phone: business.contact?.phone || '',
+    address: business.contact?.address || '',
+    city: '', // Not in database schema
+    state: '', // Not in database schema  
+    zipCode: '', // Not in database schema
+    website: getWebsiteFromSocialMedia(),
+    isActive: business.status === 'active',
+    primaryColor: business.branding?.primaryColor || '#3b82f6',
+    secondaryColor: business.branding?.secondaryColor || '#ef4444',
+  };
+}
+
+// Transform form data to database format
+function transformFormToDatabaseBusiness(formData: BusinessFormData, existingBusiness: DatabaseBusiness): any {
+  // Validate URL format for website field
+  const isValidUrl = (url: string): boolean => {
+    if (!url || url.trim() === '') return false;
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // Build social media object only with valid URLs
+  const socialMedia: any = {};
+  if (formData.website && isValidUrl(formData.website)) {
+    socialMedia.facebook = formData.website;
+  }
+
+  // Preserve existing business data and merge with form updates
+  return {
+    name: formData.name,
+    slug: formData.slug,
+    description: formData.description,
+    industry: formData.industry,
+    template: formData.template,
+    status: formData.isActive ? 'active' : 'inactive',
+    branding: {
+      primaryColor: formData.primaryColor,
+      secondaryColor: formData.secondaryColor,
+      // Preserve existing branding fields
+      logo: existingBusiness.branding?.logo,
+      favicon: existingBusiness.branding?.favicon,
+      font: existingBusiness.branding?.font,
+    },
+    contact: {
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      // Preserve existing coordinates if any
+      coordinates: existingBusiness.contact?.coordinates,
+    },
+    // Merge with existing social media, ensure empty object if no social media
+    socialMedia: Object.keys(socialMedia).length > 0 ? {
+      ...existingBusiness.socialMedia,
+      ...socialMedia,
+    } : existingBusiness.socialMedia || {},
+    seo: {
+      metaTitle: `${formData.name} - Professional Services`,
+      metaDescription: formData.description.substring(0, 160), // Ensure max length
+      keywords: [formData.industry.toLowerCase(), formData.template.replace('-', ' ')].slice(0, 10), // Ensure max 10 keywords
+      // Preserve existing SEO fields
+      ogImage: existingBusiness.seo?.ogImage,
+      canonicalUrl: existingBusiness.seo?.canonicalUrl,
+    },
+    // Preserve timestamps
+    createdAt: existingBusiness.createdAt,
+    updatedAt: new Date(),
+  };
+}
+
 export default function EditBusinessPage() {
   const router = useRouter();
   const params = useParams();
@@ -62,6 +158,21 @@ export default function EditBusinessPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(true);
   const [error, setError] = useState("");
+  const [businessData, setBusinessData] = useState<DatabaseBusiness | null>(null);
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  };
+
+  const handleNameChange = (name: string) => {
+    const slug = generateSlug(name);
+    form.setValue("slug", slug);
+  };
 
   const form = useForm<BusinessFormData>({
     resolver: zodResolver(businessSchema),
@@ -90,55 +201,70 @@ export default function EditBusinessPage() {
 
   const fetchBusiness = async () => {
     try {
-      // Mock data for now - replace with actual API call
-      const mockBusiness = {
-        id: businessId,
-        name: "QuickFuel Express",
-        slug: "quickfuel-express",
-        description: "Premium gas station with convenience store and car wash services",
-        industry: "automotive",
-        template: "gas-station",
-        email: "contact@quickfuel.com",
-        phone: "(555) 123-4567",
-        address: "123 Main Street",
-        city: "Springfield",
-        state: "CA",
-        zipCode: "90210",
-        website: "https://www.quickfuel.com",
-        isActive: true,
-        primaryColor: "#3b82f6",
-        secondaryColor: "#ef4444",
-      };
-
-      // Simulate API delay
-      setTimeout(() => {
-        form.reset(mockBusiness);
-        setIsLoadingBusiness(false);
-      }, 1000);
+      setIsLoadingBusiness(true);
+      setError("");
+      
+      // Fetch business data from API
+      const response = await fetch(`/api/businesses/${businessId}`);
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to fetch business');
+      }
+      
+      if (result.data) {
+        // Store business data for transformation
+        setBusinessData(result.data);
+        // Transform database business to form format
+        const formData = transformBusinessForEdit(result.data);
+        form.reset(formData);
+      } else {
+        throw new Error('Business not found');
+      }
     } catch (error) {
-      setError("Failed to load business data");
+      console.error('Error fetching business:', error);
+      setError(error instanceof Error ? error.message : "Failed to load business data");
+    } finally {
       setIsLoadingBusiness(false);
     }
   };
 
   const onSubmit = async (data: BusinessFormData) => {
     setIsLoading(true);
+    setError("");
+    
     try {
-      // In a real app, this would be an API call
+      if (!businessData) {
+        throw new Error('Business data not loaded');
+      }
+      
+      // Transform form data to database format
+      const updateData = transformFormToDatabaseBusiness(data, businessData);
+      
       const response = await fetch(`/api/businesses/${businessId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(updateData),
       });
 
-      if (response.ok) {
-        router.push(`/admin/businesses/${businessId}`);
-      } else {
-        throw new Error("Failed to update business");
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        // Handle validation errors more gracefully
+        if (result.error && Array.isArray(result.error)) {
+          // If it's a validation error array, show the first error message
+          const firstError = result.error[0];
+          const errorMessage = firstError.message || firstError.code || "Validation error";
+          throw new Error(`Validation error: ${errorMessage}`);
+        }
+        throw new Error(result.error || "Failed to update business");
       }
+      
+      // Redirect to business details page on success
+      router.push(`/admin/businesses/${businessId}`);
     } catch (error) {
       console.error("Error updating business:", error);
-      setError("Failed to update business. Please try again.");
+      setError(error instanceof Error ? error.message : "Failed to update business. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -223,38 +349,26 @@ export default function EditBusinessPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Business Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter business name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>URL Slug</FormLabel>
-                          <FormControl>
-                            <Input placeholder="business-name" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Changing this will affect the business URL
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Business Name</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter business name" 
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              handleNameChange(e.target.value);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={form.control}
