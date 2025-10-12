@@ -35,23 +35,59 @@ import {
   Calendar,
   Users
 } from "lucide-react";
+import { Business as DatabaseBusiness } from "@/lib/types";
 
-interface Business {
+interface AdminBusiness {
   id: string;
   name: string;
   slug: string;
   template: string;
-  status: "active" | "inactive" | "draft";
+  industry: string;
+  status: "active" | "inactive" | "draft" | "deleted";
   createdAt: string;
   lastUpdated: string;
   views: number;
   owner: string;
+  description: string;
+  contactEmail: string;
+  contactPhone: string;
+}
+
+// Transform database business to admin display format
+function transformBusinessForAdmin(business: DatabaseBusiness): AdminBusiness {
+  // Handle dates that might be strings or Date objects
+  const formatDate = (date: Date | string): string => {
+    if (!date) return new Date().toISOString().split('T')[0];
+    
+    if (typeof date === 'string') {
+      return new Date(date).toISOString().split('T')[0];
+    }
+    
+    return date.toISOString().split('T')[0];
+  };
+
+  return {
+    id: business._id?.toString() || '',
+    name: business.name,
+    slug: business.slug,
+    template: business.template,
+    industry: business.industry,
+    status: business.status,
+    createdAt: formatDate(business.createdAt),
+    lastUpdated: formatDate(business.updatedAt),
+    views: 0, // This would need to be tracked separately in a real app
+    owner: business.contact?.email || 'Unknown', // Using email as owner identifier
+    description: business.description,
+    contactEmail: business.contact?.email || '',
+    contactPhone: business.contact?.phone || ''
+  };
 }
 
 export default function BusinessesPage() {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBusinesses();
@@ -59,67 +95,23 @@ export default function BusinessesPage() {
 
   const fetchBusinesses = async () => {
     try {
-      // Mock data for now - replace with actual API call
-      const mockBusinesses: Business[] = [
-        {
-          id: "1",
-          name: "QuickFuel Express",
-          slug: "quickfuel-express",
-          template: "gas-station",
-          status: "active",
-          createdAt: "2024-01-15",
-          lastUpdated: "2024-01-20",
-          views: 1250,
-          owner: "John Smith"
-        },
-        {
-          id: "2",
-          name: "Grand Plaza Hotel",
-          slug: "grand-plaza-hotel",
-          template: "hotel",
-          status: "active",
-          createdAt: "2024-01-10",
-          lastUpdated: "2024-01-18",
-          views: 2800,
-          owner: "Sarah Johnson"
-        },
-        {
-          id: "3",
-          name: "Organic Valley Farm",
-          slug: "organic-valley-farm",
-          template: "farming",
-          status: "active",
-          createdAt: "2024-01-05",
-          lastUpdated: "2024-01-12",
-          views: 950,
-          owner: "Mike Wilson"
-        },
-        {
-          id: "4",
-          name: "HealthCare Plus",
-          slug: "healthcare-plus",
-          template: "pharmacy",
-          status: "draft",
-          createdAt: "2024-01-22",
-          lastUpdated: "2024-01-22",
-          views: 0,
-          owner: "Dr. Emily Brown"
-        },
-        {
-          id: "5",
-          name: "Bella Vista Restaurant",
-          slug: "bella-vista-restaurant",
-          template: "restaurant",
-          status: "inactive",
-          createdAt: "2023-12-20",
-          lastUpdated: "2024-01-15",
-          views: 3200,
-          owner: "Tony Martinez"
-        },
-      ];
-      setBusinesses(mockBusinesses);
+      setLoading(true);
+      setError(null);
+      
+      // Fetch all businesses from API (not just active ones for admin)
+      const response = await fetch('/api/businesses');
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // Transform database businesses to admin format
+        const adminBusinesses = result.data.map(transformBusinessForAdmin);
+        setBusinesses(adminBusinesses);
+      } else {
+        setError(result.error || 'Failed to load businesses');
+      }
     } catch (error) {
       console.error("Failed to fetch businesses:", error);
+      setError('Failed to load businesses');
     } finally {
       setLoading(false);
     }
@@ -128,10 +120,11 @@ export default function BusinessesPage() {
   const filteredBusinesses = businesses.filter(business =>
     business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     business.template.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    business.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
     business.owner.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusBadge = (status: Business["status"]) => {
+  const getStatusBadge = (status: AdminBusiness["status"]) => {
     switch (status) {
       case "active":
         return <Badge className="bg-green-100 text-green-800">Active</Badge>;
@@ -139,6 +132,8 @@ export default function BusinessesPage() {
         return <Badge variant="secondary">Inactive</Badge>;
       case "draft":
         return <Badge variant="outline">Draft</Badge>;
+      case "deleted":
+        return <Badge className="bg-red-100 text-red-800">Deleted</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -148,11 +143,18 @@ export default function BusinessesPage() {
     const templates: Record<string, string> = {
       "gas-station": "Gas Station",
       "hotel": "Hotel",
+      "hotel-resort": "Hotel & Resort", 
       "farming": "Farm",
+      "agriculture": "Agriculture",
       "pharmacy": "Pharmacy",
+      "healthcare": "Healthcare",
       "restaurant": "Restaurant",
+      "food": "Food & Beverage",
+      "retail": "Retail",
+      "automotive": "Automotive",
+      "real-estate": "Real Estate"
     };
-    return templates[template] || template;
+    return templates[template] || template.charAt(0).toUpperCase() + template.slice(1).replace('-', ' ');
   };
 
   if (loading) {
@@ -168,6 +170,21 @@ export default function BusinessesPage() {
               ))}
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="text-center py-12">
+          <div className="text-red-600 text-6xl mb-4">⚠️</div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Failed to load businesses</h3>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <Button onClick={fetchBusinesses}>
+            Try Again
+          </Button>
         </div>
       </div>
     );
@@ -223,12 +240,12 @@ export default function BusinessesPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Industries</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {businesses.reduce((sum, b) => sum + b.views, 0).toLocaleString()}
+              {new Set(businesses.map(b => b.industry)).size}
             </div>
           </CardContent>
         </Card>
@@ -272,10 +289,10 @@ export default function BusinessesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Business</TableHead>
+                <TableHead>Industry</TableHead>
                 <TableHead>Template</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Owner</TableHead>
-                <TableHead>Views</TableHead>
                 <TableHead>Last Updated</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -292,13 +309,21 @@ export default function BusinessesPage() {
                     </div>
                   </TableCell>
                   <TableCell>
+                    <Badge variant="secondary">
+                      {business.industry}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
                     <Badge variant="outline">
                       {getTemplateName(business.template)}
                     </Badge>
                   </TableCell>
                   <TableCell>{getStatusBadge(business.status)}</TableCell>
-                  <TableCell>{business.owner}</TableCell>
-                  <TableCell>{business.views.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {business.owner}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     {new Date(business.lastUpdated).toLocaleDateString()}
                   </TableCell>

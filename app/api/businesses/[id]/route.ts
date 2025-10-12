@@ -38,6 +38,10 @@ export async function PUT(
     businessId = id;
     const businessService = new BusinessService();
     const data = await request.json();
+    
+    // Debug logging
+    console.log(`PUT /api/businesses/${id} - Request data:`, JSON.stringify(data, null, 2));
+    
     const result = await businessService.updateBusiness(id, data);
 
     if (!result.success) {

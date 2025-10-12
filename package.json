@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
+    "seed": "node scripts/seed-businesses.js",
     "test:api": "node scripts/test-api.js"
   },
   "dependencies": {

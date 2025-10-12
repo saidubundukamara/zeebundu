@@ -28,8 +28,9 @@ import {
   Activity
 } from "lucide-react";
 import Link from "next/link";
+import { Business as DatabaseBusiness } from "@/lib/types";
 
-interface Business {
+interface AdminBusinessDetails {
   id: string;
   name: string;
   slug: string;
@@ -50,6 +51,41 @@ interface Business {
   updatedAt: string;
 }
 
+// Transform database business to admin details format
+function transformBusinessDetailsForAdmin(business: DatabaseBusiness): AdminBusinessDetails {
+  // Handle dates that might be strings or Date objects
+  const formatDate = (date: Date | string): string => {
+    if (!date) return new Date().toISOString();
+    
+    if (typeof date === 'string') {
+      return new Date(date).toISOString();
+    }
+    
+    return date.toISOString();
+  };
+
+  return {
+    id: business._id?.toString() || '',
+    name: business.name,
+    slug: business.slug,
+    description: business.description,
+    industry: business.industry,
+    template: business.template,
+    email: business.contact?.email || '',
+    phone: business.contact?.phone || '',
+    address: business.contact?.address || '',
+    city: '', // Not in database schema - could be extracted from address
+    state: '', // Not in database schema - could be extracted from address  
+    zipCode: '', // Not in database schema - could be extracted from address
+    website: business.socialMedia?.facebook || '', // Using social media as website fallback
+    isActive: business.status === 'active',
+    primaryColor: business.branding?.primaryColor || '#3b82f6',
+    secondaryColor: business.branding?.secondaryColor || '#ef4444',
+    createdAt: formatDate(business.createdAt),
+    updatedAt: formatDate(business.updatedAt)
+  };
+}
+
 interface BusinessStats {
   pageViews: number;
   uniqueVisitors: number;
@@ -62,7 +98,7 @@ export default function BusinessDetailsPage() {
   const businessId = params.id as string;
   
   const [isLoading, setIsLoading] = useState(true);
-  const [business, setBusiness] = useState<Business | null>(null);
+  const [business, setBusiness] = useState<AdminBusinessDetails | null>(null);
   const [stats, setStats] = useState<BusinessStats | null>(null);
   const [error, setError] = useState("");
 
@@ -72,43 +108,37 @@ export default function BusinessDetailsPage() {
 
   const fetchBusinessDetails = async () => {
     try {
-      // Mock data for now - replace with actual API call
-      const mockBusiness: Business = {
-        id: businessId,
-        name: "QuickFuel Express",
-        slug: "quickfuel-express",
-        description: "Premium gas station with convenience store and car wash services. We provide high-quality fuel, 24/7 convenience shopping, and professional automotive services to serve our community.",
-        industry: "automotive",
-        template: "gas-station",
-        email: "contact@quickfuel.com",
-        phone: "(555) 123-4567",
-        address: "123 Main Street",
-        city: "Springfield",
-        state: "CA",
-        zipCode: "90210",
-        website: "https://www.quickfuel.com",
-        isActive: true,
-        primaryColor: "#3b82f6",
-        secondaryColor: "#ef4444",
-        createdAt: "2024-01-15T10:30:00Z",
-        updatedAt: "2024-01-20T14:45:00Z",
-      };
-
-      const mockStats: BusinessStats = {
-        pageViews: 1247,
-        uniqueVisitors: 892,
-        contactSubmissions: 23,
-        lastUpdated: "2024-01-20T14:45:00Z",
-      };
-
-      // Simulate API delay
-      setTimeout(() => {
-        setBusiness(mockBusiness);
+      setIsLoading(true);
+      setError("");
+      
+      // Fetch business data from API
+      const response = await fetch(`/api/businesses/${businessId}`);
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to fetch business');
+      }
+      
+      if (result.data) {
+        // Transform database business to admin format
+        const adminBusiness = transformBusinessDetailsForAdmin(result.data);
+        setBusiness(adminBusiness);
+        
+        // Mock stats for now - in a real app, this would be a separate API call
+        const mockStats: BusinessStats = {
+          pageViews: 0, // Would come from analytics
+          uniqueVisitors: 0, // Would come from analytics
+          contactSubmissions: 0, // Would come from form submissions
+          lastUpdated: adminBusiness.updatedAt,
+        };
         setStats(mockStats);
-        setIsLoading(false);
-      }, 1000);
+      } else {
+        throw new Error('Business not found');
+      }
     } catch (error) {
-      setError("Failed to load business details");
+      console.error('Error fetching business details:', error);
+      setError(error instanceof Error ? error.message : "Failed to load business details");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -125,6 +155,13 @@ export default function BusinessDetailsPage() {
 
   const getIndustryLabel = (industry: string) => {
     const industryMap: Record<string, string> = {
+      "Automotive": "Automotive",
+      "Hospitality": "Hospitality", 
+      "Food & Beverage": "Food & Beverage",
+      "Healthcare": "Healthcare",
+      "Agriculture": "Agriculture",
+      "Retail": "Retail",
+      "Real Estate": "Real Estate",
       "automotive": "Automotive",
       "hospitality": "Hospitality",
       "food-service": "Food & Service",
@@ -140,11 +177,16 @@ export default function BusinessDetailsPage() {
     const templateMap: Record<string, string> = {
       "gas-station": "Gas Station",
       "hotel": "Hotel",
-      "restaurant": "Restaurant",
+      "hotel-resort": "Hotel & Resort",
+      "restaurant": "Restaurant", 
       "pharmacy": "Pharmacy",
       "farming": "Farm",
+      "agriculture": "Agriculture",
+      "retail": "Retail",
+      "automotive": "Automotive",
+      "real-estate": "Real Estate"
     };
-    return templateMap[template] || template;
+    return templateMap[template] || template.charAt(0).toUpperCase() + template.slice(1).replace('-', ' ');
   };
 
   if (isLoading) {
