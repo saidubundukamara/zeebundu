@@ -138,7 +138,6 @@ export function HeroEditor({
             <Button
               key={tab.id}
               variant={activeTab === tab.id ? 'default' : 'outline'}
-              size="sm"
               onClick={() => setActiveTab(tab.id as any)}
               className="flex items-center gap-2"
             >
@@ -149,7 +148,6 @@ export function HeroEditor({
         </div>
         <Button
           variant="outline"
-          size="sm"
           onClick={() => setShowPreview(!showPreview)}
           className="flex items-center gap-2"
         >
@@ -290,7 +288,6 @@ export function HeroEditor({
                   <Button
                     key={align.value}
                     variant={content.textAlign === align.value ? 'default' : 'outline'}
-                    size="sm"
                     onClick={() => updateField('textAlign', align.value)}
                   >
                     {align.label}
@@ -304,7 +301,6 @@ export function HeroEditor({
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Call-to-Action Buttons</label>
                 <Button
-                  size="sm"
                   onClick={addButton}
                   className="flex items-center gap-2"
                 >
@@ -328,7 +324,6 @@ export function HeroEditor({
                         />
                         <Button
                           variant="ghost"
-                          size="sm"
                           onClick={() => removeButton(button.id)}
                           className="text-red-500 hover:text-red-700"
                         >
@@ -344,7 +339,6 @@ export function HeroEditor({
                           value={button.text}
                           onChange={(e) => updateButton(button.id, 'text', e.target.value)}
                           placeholder="Button text"
-                          size="sm"
                         />
                       </div>
                       <div>
@@ -353,7 +347,6 @@ export function HeroEditor({
                           value={button.link}
                           onChange={(e) => updateButton(button.id, 'link', e.target.value)}
                           placeholder="/#section or https://..."
-                          size="sm"
                         />
                       </div>
                       <div>
@@ -402,7 +395,7 @@ export function HeroEditor({
               <div className="mt-2">
                 <MediaPicker
                   trigger={
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" >
                       <ImageIcon className="w-4 h-4 mr-2" />
                       {content.backgroundImage ? 'Change Image' : 'Select Image'}
                     </Button>
@@ -430,7 +423,7 @@ export function HeroEditor({
               <div className="mt-2">
                 <MediaPicker
                   trigger={
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" >
                       <Video className="w-4 h-4 mr-2" />
                       {content.backgroundVideo ? 'Change Video' : 'Select Video'}
                     </Button>
@@ -470,7 +463,6 @@ export function HeroEditor({
                         value={content.overlay.color}
                         onChange={(e) => updateOverlay('color', e.target.value)}
                         placeholder="#000000"
-                        size="sm"
                         className="flex-1"
                       />
                     </div>

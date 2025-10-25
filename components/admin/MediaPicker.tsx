@@ -316,6 +316,27 @@ export function MediaPreview({
   placeholder = "No media selected",
   className = "w-full h-48"
 }: MediaPreviewProps) {
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  // Reset states when media changes
+  useEffect(() => {
+    if (media) {
+      setImageLoading(true);
+      setImageError(false);
+    }
+  }, [media?.url, media?.thumbnailUrl]);
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    setImageLoading(false);
+    setImageError(true);
+  };
+
   if (!media) {
     return (
       <div 
@@ -331,14 +352,49 @@ export function MediaPreview({
     );
   }
 
+  const getImageSrc = () => {
+    // Use thumbnailUrl if available and not broken, otherwise fallback to main URL
+    if (media.thumbnailUrl && !imageError) {
+      return media.thumbnailUrl;
+    }
+    return media.url;
+  };
+
   return (
-    <div className={`${className} relative rounded-lg overflow-hidden border group`}>
+    <div className={`${className} relative rounded-lg overflow-hidden border group bg-gray-50`}>
       {media.mimeType.startsWith('image/') ? (
-        <img
-          src={media.thumbnailUrl || media.url}
-          alt={media.alt || media.originalName}
-          className="w-full h-full object-cover"
-        />
+        <>
+          {/* Loading skeleton */}
+          {imageLoading && (
+            <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+              <ImageIcon className="w-8 h-8 text-gray-400" />
+            </div>
+          )}
+          
+          {/* Error state */}
+          {imageError && (
+            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+              <div className="text-center">
+                <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Image unavailable</p>
+                <p className="text-xs text-gray-400">{media.originalName}</p>
+              </div>
+            </div>
+          )}
+          
+          {/* Actual image */}
+          {!imageError && (
+            <img
+              src={getImageSrc()}
+              alt={media.alt || media.originalName}
+              className={`w-full h-full object-cover transition-opacity duration-200 ${
+                imageLoading ? 'opacity-0' : 'opacity-100'
+              }`}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+            />
+          )}
+        </>
       ) : (
         <div className="w-full h-full bg-gray-100 flex items-center justify-center">
           <div className="text-center">

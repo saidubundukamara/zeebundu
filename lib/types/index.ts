@@ -1,7 +1,7 @@
-export * from './business';
-export * from './content';
-export * from './template';
-export * from './media';
+export * from "./business";
+export * from "./content";
+export * from "./template";
+export * from "./media";
 
 // API Response types
 export interface ApiResponse<T = any> {
@@ -34,6 +34,7 @@ export interface UpdateOperation {
   $push?: Record<string, any>;
   $pull?: Record<string, any>;
   $inc?: Record<string, any>;
+  $addToSet?: Record<string, any>;
 }
 
 // Validation types

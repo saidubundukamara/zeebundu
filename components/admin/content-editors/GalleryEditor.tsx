@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,57 @@ import {
   EyeOff
 } from 'lucide-react';
 import { MediaAsset } from '@/lib/types';
+
+// ImageThumbnail component with error handling
+interface ImageThumbnailProps {
+  src: string;
+  alt: string;
+  className?: string;
+}
+
+function ImageThumbnail({ src, alt, className }: ImageThumbnailProps) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(false);
+  }, [src]);
+
+  const handleLoad = () => {
+    setLoading(false);
+    setError(false);
+  };
+
+  const handleError = () => {
+    setLoading(false);
+    setError(true);
+  };
+
+  return (
+    <div className={`relative ${className}`}>
+      {loading && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+          <ImageIcon className="w-4 h-4 text-gray-400" />
+        </div>
+      )}
+      
+      {error ? (
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+          <ImageIcon className="w-4 h-4 text-gray-400" />
+        </div>
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          className={`${className} ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+          onLoad={handleLoad}
+          onError={handleError}
+        />
+      )}
+    </div>
+  );
+}
 
 interface GalleryImage {
   id: string;
@@ -264,9 +315,9 @@ export function GalleryEditor({
                         key={image.id}
                         className="aspect-square bg-gray-200 rounded overflow-hidden"
                       >
-                        <img
+                        <ImageThumbnail
                           src={image.media.thumbnailUrl || image.media.url}
-                          alt={image.alt}
+                          alt={image.alt || image.caption || 'Gallery image'}
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -298,9 +349,9 @@ export function GalleryEditor({
 
                       {/* Image Thumbnail */}
                       <div className="w-20 h-20 bg-gray-200 rounded overflow-hidden flex-shrink-0">
-                        <img
+                        <ImageThumbnail
                           src={image.media.thumbnailUrl || image.media.url}
-                          alt={image.alt}
+                          alt={image.alt || image.caption || 'Gallery image'}
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -318,7 +369,6 @@ export function GalleryEditor({
                           <div className="flex items-center gap-2">
                             <Button
                               variant="ghost"
-                              size="sm"
                               onClick={() => toggleImageVisibility(image.id)}
                               title={image.isVisible ? 'Hide image' : 'Show image'}
                             >
@@ -330,7 +380,6 @@ export function GalleryEditor({
                             </Button>
                             <Button
                               variant="ghost"
-                              size="sm"
                               onClick={() => setEditingImage(editingImage === image.id ? null : image.id)}
                               title="Edit details"
                             >
@@ -338,7 +387,6 @@ export function GalleryEditor({
                             </Button>
                             <Button
                               variant="ghost"
-                              size="sm"
                               onClick={() => removeImage(image.id)}
                               title="Remove image"
                               className="text-red-500 hover:text-red-700"
@@ -356,7 +404,6 @@ export function GalleryEditor({
                                 value={image.caption || ''}
                                 onChange={(e) => updateImage(image.id, { caption: e.target.value })}
                                 placeholder="Image caption"
-                                size="sm"
                               />
                             </div>
                             <div>
@@ -365,7 +412,6 @@ export function GalleryEditor({
                                 value={image.alt || ''}
                                 onChange={(e) => updateImage(image.id, { alt: e.target.value })}
                                 placeholder="Alt text for accessibility"
-                                size="sm"
                               />
                             </div>
                           </div>

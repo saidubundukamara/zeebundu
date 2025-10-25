@@ -1,16 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { MediaRepository } from '@/lib/repositories/MediaRepository';
-import { ObjectId } from 'mongodb';
+import { NextRequest, NextResponse } from "next/server";
+import { MediaRepository } from "@/lib/repositories/MediaRepository";
+import { ObjectId } from "mongodb";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const businessId = searchParams.get('businessId');
-    const type = searchParams.get('type');
-    const tags = searchParams.get('tags');
-    const search = searchParams.get('search');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const skip = parseInt(searchParams.get('skip') || '0');
+    const businessId = searchParams.get("businessId");
+    const type = searchParams.get("type");
+    const tags = searchParams.get("tags");
+    const search = searchParams.get("search");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const skip = parseInt(searchParams.get("skip") || "0");
 
     const mediaRepository = new MediaRepository();
 
@@ -29,17 +29,15 @@ export async function GET(request: NextRequest) {
     const filters = {
       businessId: businessId || undefined,
       type: type || undefined,
-      tags: tags ? tags.split(',').map(tag => tag.trim()) : undefined,
+      tags: tags ? tags.split(",").map((tag) => tag.trim()) : undefined,
       limit,
       skip,
     };
 
     const media = await mediaRepository.getMediaByFilters(filters);
-    
+
     // Get total count for pagination
-    const totalFilters = { ...filters };
-    delete totalFilters.limit;
-    delete totalFilters.skip;
+    const { limit: _, skip: __, ...totalFilters } = filters;
     const allMedia = await mediaRepository.getMediaByFilters(totalFilters);
 
     return NextResponse.json({
@@ -52,13 +50,12 @@ export async function GET(request: NextRequest) {
         hasMore: skip + limit < allMedia.length,
       },
     });
-
   } catch (error) {
-    console.error('Media fetch error:', error);
+    console.error("Media fetch error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to fetch media' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to fetch media",
       },
       { status: 500 }
     );

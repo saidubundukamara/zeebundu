@@ -29,9 +29,9 @@ const businessSchema = z.object({
   state: z.string().optional(),
   zipCode: z.string().optional(),
   website: z.string().url("Please enter a valid website URL").optional().or(z.literal("")),
-  isActive: z.boolean().default(true),
-  primaryColor: z.string().default("#3b82f6"),
-  secondaryColor: z.string().default("#ef4444"),
+  isActive: z.boolean(),
+  primaryColor: z.string(),
+  secondaryColor: z.string(),
 });
 
 type BusinessFormData = z.infer<typeof businessSchema>;
