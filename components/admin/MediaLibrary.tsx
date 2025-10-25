@@ -32,6 +32,58 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import toast from 'react-hot-toast';
 import { MediaAsset } from '@/lib/types';
 
+// MediaThumbnail component with error handling and loading states
+interface MediaThumbnailProps {
+  src: string;
+  alt: string;
+  className?: string;
+}
+
+function MediaThumbnail({ src, alt, className }: MediaThumbnailProps) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  // Reset states when src changes
+  useEffect(() => {
+    setLoading(true);
+    setError(false);
+  }, [src]);
+
+  const handleLoad = () => {
+    setLoading(false);
+    setError(false);
+  };
+
+  const handleError = () => {
+    setLoading(false);
+    setError(true);
+  };
+
+  return (
+    <div className={`relative ${className}`}>
+      {loading && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+          <Image className="w-4 h-4 text-gray-400" />
+        </div>
+      )}
+      
+      {error ? (
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+          <Image className="w-4 h-4 text-gray-400" />
+        </div>
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          className={`${className} ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+          onLoad={handleLoad}
+          onError={handleError}
+        />
+      )}
+    </div>
+  );
+}
+
 interface MediaLibraryProps {
   businessId?: string;
   onMediaSelect?: (media: MediaAsset | MediaAsset[]) => void;
@@ -332,7 +384,7 @@ export function MediaLibrary({
                 <CardContent className="p-2">
                   <div className="aspect-square relative mb-2">
                     {mediaItem.mimeType.startsWith('image/') ? (
-                      <img
+                      <MediaThumbnail
                         src={mediaItem.thumbnailUrl || mediaItem.url}
                         alt={mediaItem.alt || mediaItem.originalName}
                         className="w-full h-full object-cover rounded"
@@ -443,7 +495,7 @@ export function MediaLibrary({
                     
                     <div className="flex-shrink-0">
                       {mediaItem.mimeType.startsWith('image/') ? (
-                        <img
+                        <MediaThumbnail
                           src={mediaItem.thumbnailUrl || mediaItem.url}
                           alt={mediaItem.alt || mediaItem.originalName}
                           className="h-12 w-12 object-cover rounded"

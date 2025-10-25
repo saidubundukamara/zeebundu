@@ -1,8 +1,8 @@
-import { Business, ApiResponse } from '../types';
-import { BusinessRepository } from '../repositories/BusinessRepository';
-import { businessSchema } from '../utils/validation';
-import { sanitizeSlug } from '../utils/validation';
-import { BUSINESS_STATUS } from '../utils/constants';
+import { Business, ApiResponse } from "../types";
+import { BusinessRepository } from "../repositories/BusinessRepository";
+import { businessSchema } from "../utils/validation";
+import { sanitizeSlug } from "../utils/validation";
+import { BUSINESS_STATUS } from "../utils/constants";
 
 export class BusinessService {
   private businessRepository: BusinessRepository;
@@ -10,43 +10,52 @@ export class BusinessService {
   constructor() {
     this.businessRepository = new BusinessRepository();
   }
-  async createBusiness(data: Omit<Business, '_id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Business>> {
+  async createBusiness(
+    data: Omit<Business, "_id" | "createdAt" | "updatedAt">
+  ): Promise<ApiResponse<Business>> {
     try {
       // Validate input data
       const validatedData = businessSchema.parse(data);
-      
+
       // Sanitize and validate slug
       const sanitizedSlug = sanitizeSlug(validatedData.slug);
       await this.businessRepository.validateSlugUniqueness(sanitizedSlug);
-      
+
       // Create business with sanitized slug
       const business = await this.businessRepository.create({
         ...validatedData,
         slug: sanitizedSlug,
         status: validatedData.status || BUSINESS_STATUS.DRAFT,
+        socialMedia: validatedData.socialMedia || {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       return {
         success: true,
         data: business,
-        message: 'Business created successfully'
+        message: "Business created successfully",
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create business'
+        error:
+          error instanceof Error ? error.message : "Failed to create business",
       };
     }
   }
 
-  async updateBusiness(id: string, data: Partial<Business>): Promise<ApiResponse<Business>> {
+  async updateBusiness(
+    id: string,
+    data: Partial<Business>
+  ): Promise<ApiResponse<Business>> {
     try {
       // Check if business exists
       const existing = await this.businessRepository.findById(id);
       if (!existing) {
         return {
           success: false,
-          error: 'Business not found'
+          error: "Business not found",
         };
       }
 
@@ -65,22 +74,33 @@ export class BusinessService {
           data.slug = sanitizeSlugValidation;
         }
       }
-      
+
       // Validate color formats if provided
-      if (data.branding?.primaryColor && !/^#[0-9A-F]{6}$/i.test(data.branding.primaryColor)) {
-        throw new Error('Invalid primary color format');
+      if (
+        data.branding?.primaryColor &&
+        !/^#[0-9A-F]{6}$/i.test(data.branding.primaryColor)
+      ) {
+        throw new Error("Invalid primary color format");
       }
-      if (data.branding?.secondaryColor && !/^#[0-9A-F]{6}$/i.test(data.branding.secondaryColor)) {
-        throw new Error('Invalid secondary color format');
-      }
-      
-      // Validate email format if provided
-      if (data.contact?.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.contact.email)) {
-        throw new Error('Invalid email format');
+      if (
+        data.branding?.secondaryColor &&
+        !/^#[0-9A-F]{6}$/i.test(data.branding.secondaryColor)
+      ) {
+        throw new Error("Invalid secondary color format");
       }
 
-      const updatedBusiness = await this.businessRepository.updateById(id, { $set: data });
-      
+      // Validate email format if provided
+      if (
+        data.contact?.email &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.contact.email)
+      ) {
+        throw new Error("Invalid email format");
+      }
+
+      const updatedBusiness = await this.businessRepository.updateById(id, {
+        $set: data,
+      });
+
       if (!updatedBusiness) {
         // If update returns null, try to fetch the document to verify if the update actually succeeded
         const refetchedBusiness = await this.businessRepository.findById(id);
@@ -89,12 +109,12 @@ export class BusinessService {
           return {
             success: true,
             data: refetchedBusiness,
-            message: 'Business updated successfully'
+            message: "Business updated successfully",
           };
         } else {
           return {
             success: false,
-            error: 'Failed to update business'
+            error: "Failed to update business",
           };
         }
       }
@@ -102,12 +122,13 @@ export class BusinessService {
       return {
         success: true,
         data: updatedBusiness,
-        message: 'Business updated successfully'
+        message: "Business updated successfully",
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update business'
+        error:
+          error instanceof Error ? error.message : "Failed to update business",
       };
     }
   }
@@ -115,22 +136,23 @@ export class BusinessService {
   async getBusinessById(id: string): Promise<ApiResponse<Business>> {
     try {
       const business = await this.businessRepository.findById(id);
-      
+
       if (!business) {
         return {
           success: false,
-          error: 'Business not found'
+          error: "Business not found",
         };
       }
 
       return {
         success: true,
-        data: business
+        data: business,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch business'
+        error:
+          error instanceof Error ? error.message : "Failed to fetch business",
       };
     }
   }
@@ -138,11 +160,11 @@ export class BusinessService {
   async getBusinessBySlug(slug: string): Promise<ApiResponse<Business>> {
     try {
       const business = await this.businessRepository.findBySlug(slug);
-      
+
       if (!business) {
         return {
           success: false,
-          error: 'Business not found'
+          error: "Business not found",
         };
       }
 
@@ -150,18 +172,19 @@ export class BusinessService {
       if (business.status !== BUSINESS_STATUS.ACTIVE) {
         return {
           success: false,
-          error: 'Business not available'
+          error: "Business not available",
         };
       }
 
       return {
         success: true,
-        data: business
+        data: business,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch business'
+        error:
+          error instanceof Error ? error.message : "Failed to fetch business",
       };
     }
   }
@@ -169,21 +192,24 @@ export class BusinessService {
   async getAllBusinesses(filters?: any): Promise<ApiResponse<Business[]>> {
     try {
       let businesses: Business[];
-      
+
       if (filters) {
-        businesses = await this.businessRepository.getBusinessesByFilters(filters);
+        businesses = await this.businessRepository.getBusinessesByFilters(
+          filters
+        );
       } else {
         businesses = await this.businessRepository.findAll();
       }
 
       return {
         success: true,
-        data: businesses
+        data: businesses,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch businesses'
+        error:
+          error instanceof Error ? error.message : "Failed to fetch businesses",
       };
     }
   }
@@ -191,31 +217,39 @@ export class BusinessService {
   async getActiveBusinesses(): Promise<ApiResponse<Business[]>> {
     try {
       const businesses = await this.businessRepository.findActiveBusinesses();
-      
+
       return {
         success: true,
-        data: businesses
+        data: businesses,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch active businesses'
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch active businesses",
       };
     }
   }
 
   async searchBusinesses(searchTerm: string): Promise<ApiResponse<Business[]>> {
     try {
-      const businesses = await this.businessRepository.searchBusinesses(searchTerm);
-      
+      const businesses = await this.businessRepository.searchBusinesses(
+        searchTerm
+      );
+
       return {
         success: true,
-        data: businesses
+        data: businesses,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to search businesses'
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to search businesses",
       };
     }
   }
@@ -223,23 +257,26 @@ export class BusinessService {
   async activateBusiness(id: string): Promise<ApiResponse<Business>> {
     try {
       const business = await this.businessRepository.activateBusiness(id);
-      
+
       if (!business) {
         return {
           success: false,
-          error: 'Business not found'
+          error: "Business not found",
         };
       }
 
       return {
         success: true,
         data: business,
-        message: 'Business activated successfully'
+        message: "Business activated successfully",
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to activate business'
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to activate business",
       };
     }
   }
@@ -247,31 +284,37 @@ export class BusinessService {
   async deactivateBusiness(id: string): Promise<ApiResponse<Business>> {
     try {
       const business = await this.businessRepository.deactivateBusiness(id);
-      
+
       if (!business) {
         return {
           success: false,
-          error: 'Business not found'
+          error: "Business not found",
         };
       }
 
       return {
         success: true,
         data: business,
-        message: 'Business deactivated successfully'
+        message: "Business deactivated successfully",
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to deactivate business'
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to deactivate business",
       };
     }
   }
 
-  async deleteBusiness(id: string, permanent: boolean = false): Promise<ApiResponse<boolean>> {
+  async deleteBusiness(
+    id: string,
+    permanent: boolean = false
+  ): Promise<ApiResponse<boolean>> {
     try {
       let success: boolean;
-      
+
       if (permanent) {
         success = await this.businessRepository.deleteById(id);
       } else {
@@ -282,31 +325,38 @@ export class BusinessService {
       if (!success) {
         return {
           success: false,
-          error: 'Business not found'
+          error: "Business not found",
         };
       }
 
       return {
         success: true,
         data: success,
-        message: permanent ? 'Business deleted permanently' : 'Business deleted successfully'
+        message: permanent
+          ? "Business deleted permanently"
+          : "Business deleted successfully",
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete business'
+        error:
+          error instanceof Error ? error.message : "Failed to delete business",
       };
     }
   }
 
-  async duplicateBusiness(id: string, newName: string, newSlug: string): Promise<ApiResponse<Business>> {
+  async duplicateBusiness(
+    id: string,
+    newName: string,
+    newSlug: string
+  ): Promise<ApiResponse<Business>> {
     try {
       const original = await this.businessRepository.findById(id);
-      
+
       if (!original) {
         return {
           success: false,
-          error: 'Original business not found'
+          error: "Original business not found",
         };
       }
 
@@ -321,17 +371,22 @@ export class BusinessService {
         name: newName,
         slug: sanitizedSlug,
         status: BUSINESS_STATUS.DRAFT,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       return {
         success: true,
         data: duplicatedBusiness,
-        message: 'Business duplicated successfully'
+        message: "Business duplicated successfully",
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to duplicate business'
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to duplicate business",
       };
     }
   }
@@ -339,65 +394,87 @@ export class BusinessService {
   async getBusinessStats(): Promise<ApiResponse<any>> {
     try {
       const stats = await this.businessRepository.getBusinessStats();
-      
+
       return {
         success: true,
-        data: stats
+        data: stats,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch business statistics'
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch business statistics",
       };
     }
   }
 
-  async getBusinessesByTemplate(template: string): Promise<ApiResponse<Business[]>> {
+  async getBusinessesByTemplate(
+    template: string
+  ): Promise<ApiResponse<Business[]>> {
     try {
       const businesses = await this.businessRepository.findByTemplate(template);
-      
+
       return {
         success: true,
-        data: businesses
+        data: businesses,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch businesses by template'
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch businesses by template",
       };
     }
   }
 
-  async validateBusinessSlug(slug: string, excludeId?: string): Promise<ApiResponse<boolean>> {
+  async validateBusinessSlug(
+    slug: string,
+    excludeId?: string
+  ): Promise<ApiResponse<boolean>> {
     try {
       const sanitizedSlug = sanitizeSlug(slug);
-      const isAvailable = await this.businessRepository.isSlugAvailable(sanitizedSlug, excludeId);
-      
+      const isAvailable = await this.businessRepository.isSlugAvailable(
+        sanitizedSlug,
+        excludeId
+      );
+
       return {
         success: true,
         data: isAvailable,
-        message: isAvailable ? 'Slug is available' : 'Slug is already taken'
+        message: isAvailable ? "Slug is available" : "Slug is already taken",
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to validate slug'
+        error:
+          error instanceof Error ? error.message : "Failed to validate slug",
       };
     }
   }
 
-  async getRecentBusinesses(limit: number = 10): Promise<ApiResponse<Business[]>> {
+  async getRecentBusinesses(
+    limit: number = 10
+  ): Promise<ApiResponse<Business[]>> {
     try {
-      const businesses = await this.businessRepository.getRecentBusinesses(limit);
-      
+      const businesses = await this.businessRepository.getRecentBusinesses(
+        limit
+      );
+
       return {
         success: true,
-        data: businesses
+        data: businesses,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch recent businesses'
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch recent businesses",
       };
     }
   }

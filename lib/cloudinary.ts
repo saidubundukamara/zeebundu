@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary } from "cloudinary";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -34,17 +34,17 @@ export interface UploadOptions {
   folder?: string;
   public_id?: string;
   transformation?: object;
-  resource_type?: 'image' | 'video' | 'raw' | 'auto';
+  resource_type?: "image" | "video" | "raw" | "auto";
   overwrite?: boolean;
   unique_filename?: boolean;
 }
 
 export interface ListOptions {
-  type?: 'upload' | 'private' | 'authenticated';
+  type?: "upload" | "private" | "authenticated";
   prefix?: string;
   max_results?: number;
   next_cursor?: string;
-  resource_type?: 'image' | 'video' | 'raw';
+  resource_type?: "image" | "video" | "raw";
 }
 
 export class CloudinaryService {
@@ -54,7 +54,7 @@ export class CloudinaryService {
   ): Promise<CloudinaryUploadResult> {
     try {
       const result = await cloudinary.uploader.upload(file as string, {
-        resource_type: options.resource_type || 'auto',
+        resource_type: options.resource_type || "auto",
         unique_filename: options.unique_filename ?? true,
         overwrite: options.overwrite ?? false,
         transformation: options.transformation,
@@ -74,22 +74,24 @@ export class CloudinaryService {
         bytes: result.bytes,
       };
     } catch (error) {
-      console.error('Cloudinary upload error:', error);
-      throw new Error('Failed to upload file to Cloudinary');
+      console.error("Cloudinary upload error:", error);
+      throw new Error("Failed to upload file to Cloudinary");
     }
   }
 
   static async deleteFile(publicId: string): Promise<boolean> {
     try {
       const result = await cloudinary.uploader.destroy(publicId);
-      return result.result === 'ok';
+      return result.result === "ok";
     } catch (error) {
-      console.error('Cloudinary delete error:', error);
-      throw new Error('Failed to delete file from Cloudinary');
+      console.error("Cloudinary delete error:", error);
+      throw new Error("Failed to delete file from Cloudinary");
     }
   }
 
-  static async deleteFiles(publicIds: string[]): Promise<CloudinaryDeleteResult> {
+  static async deleteFiles(
+    publicIds: string[]
+  ): Promise<CloudinaryDeleteResult> {
     try {
       const result = await cloudinary.api.delete_resources(publicIds);
       return {
@@ -97,19 +99,21 @@ export class CloudinaryService {
         partial: result.partial || false,
       };
     } catch (error) {
-      console.error('Cloudinary bulk delete error:', error);
-      throw new Error('Failed to delete files from Cloudinary');
+      console.error("Cloudinary bulk delete error:", error);
+      throw new Error("Failed to delete files from Cloudinary");
     }
   }
 
-  static async listFiles(options: ListOptions = {}): Promise<CloudinaryResourcesResult> {
+  static async listFiles(
+    options: ListOptions = {}
+  ): Promise<CloudinaryResourcesResult> {
     try {
       const result = await cloudinary.api.resources({
-        type: options.type || 'upload',
+        type: options.type || "upload",
         prefix: options.prefix,
         max_results: options.max_results || 50,
         next_cursor: options.next_cursor,
-        resource_type: options.resource_type || 'image',
+        resource_type: options.resource_type || "image",
       });
 
       return {
@@ -128,18 +132,18 @@ export class CloudinaryService {
         total_count: result.total_count,
       };
     } catch (error) {
-      console.error('Cloudinary list error:', error);
-      throw new Error('Failed to list files from Cloudinary');
+      console.error("Cloudinary list error:", error);
+      throw new Error("Failed to list files from Cloudinary");
     }
   }
 
   static async listFolders(prefix?: string): Promise<string[]> {
     try {
-      const result = await cloudinary.api.sub_folders(prefix || '');
+      const result = await cloudinary.api.sub_folders(prefix || "");
       return result.folders.map((folder: any) => folder.name);
     } catch (error) {
-      console.error('Cloudinary list folders error:', error);
-      throw new Error('Failed to list folders from Cloudinary');
+      console.error("Cloudinary list folders error:", error);
+      throw new Error("Failed to list folders from Cloudinary");
     }
   }
 
@@ -148,8 +152,8 @@ export class CloudinaryService {
       await cloudinary.api.delete_folder(folder);
       return true;
     } catch (error) {
-      console.error('Cloudinary delete folder error:', error);
-      throw new Error('Failed to delete folder from Cloudinary');
+      console.error("Cloudinary delete folder error:", error);
+      throw new Error("Failed to delete folder from Cloudinary");
     }
   }
 
@@ -158,8 +162,8 @@ export class CloudinaryService {
       await cloudinary.api.create_folder(path);
       return true;
     } catch (error) {
-      console.error('Cloudinary create folder error:', error);
-      throw new Error('Failed to create folder in Cloudinary');
+      console.error("Cloudinary create folder error:", error);
+      throw new Error("Failed to create folder in Cloudinary");
     }
   }
 
@@ -177,28 +181,28 @@ export class CloudinaryService {
   static async uploadBusinessMedia(
     file: string | Buffer,
     businessId: string,
-    category: string = 'general'
+    category: string = "general"
   ): Promise<CloudinaryUploadResult> {
     return this.uploadFile(file, {
       folder: `zeebundu/businesses/${businessId}/${category}`,
-      resource_type: 'auto',
+      resource_type: "auto",
     });
   }
 
-  static async generateResponsiveImageUrl(
+  static generateResponsiveImageUrl(
     publicId: string,
     width: number,
-    quality: string = 'auto'
+    quality: string = "auto"
   ): string {
     return this.generateTransformationUrl(publicId, {
       width,
-      crop: 'scale',
+      crop: "scale",
       quality,
-      format: 'auto',
+      format: "auto",
     });
   }
 
-  static async generateThumbnail(
+  static generateThumbnail(
     publicId: string,
     width: number = 300,
     height: number = 200
@@ -206,9 +210,9 @@ export class CloudinaryService {
     return this.generateTransformationUrl(publicId, {
       width,
       height,
-      crop: 'fill',
-      quality: 'auto',
-      format: 'auto',
+      crop: "fill",
+      quality: "auto",
+      format: "auto",
     });
   }
 }
