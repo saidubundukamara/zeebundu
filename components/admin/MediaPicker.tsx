@@ -31,6 +31,7 @@ interface MediaPickerProps {
   selectedMedia?: MediaAsset[];
   title?: string;
   description?: string;
+  autoConfirmSingle?: boolean;
 }
 
 export function MediaPicker({
@@ -43,10 +44,12 @@ export function MediaPicker({
   maxSelection = 10,
   selectedMedia = [],
   title = 'Select Media',
-  description = 'Choose media from your library or upload new files'
+  description = 'Choose media from your library or upload new files',
+  autoConfirmSingle = false
 }: MediaPickerProps) {
   const [open, setOpen] = useState(false);
   const [currentSelection, setCurrentSelection] = useState<MediaAsset[]>(selectedMedia);
+  const [lastSelected, setLastSelected] = useState<MediaAsset | null>(null);
   const [activeTab, setActiveTab] = useState('library');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -70,6 +73,12 @@ export function MediaPicker({
     
     if (selectionMode === 'single') {
       setCurrentSelection(mediaArray.slice(0, 1));
+      setLastSelected(mediaArray[0] || null);
+      if (autoConfirmSingle && mediaArray[0]) {
+        onSelect(mediaArray[0]);
+        setOpen(false);
+        return;
+      }
     } else {
       // For multiple selection, add/remove items
       const newSelection = [...currentSelection];
@@ -91,7 +100,9 @@ export function MediaPicker({
 
   const handleConfirmSelection = () => {
     if (selectionMode === 'single') {
-      onSelect(currentSelection[0]);
+      const media = currentSelection[0] || lastSelected || null;
+      if (!media) return;
+      onSelect(media);
     } else {
       onSelect(currentSelection);
     }
@@ -102,6 +113,12 @@ export function MediaPicker({
     // Auto-select uploaded media
     if (selectionMode === 'single') {
       setCurrentSelection([media]);
+      setLastSelected(media || null);
+      if (autoConfirmSingle && media) {
+        onSelect(media);
+        setOpen(false);
+        return;
+      }
     } else if (currentSelection.length < maxSelection) {
       setCurrentSelection(prev => [...prev, media]);
     }
@@ -286,7 +303,6 @@ export function MediaPicker({
               </Button>
               <Button
                 onClick={handleConfirmSelection}
-                disabled={currentSelection.length === 0}
                 className="flex items-center gap-2"
               >
                 <Check className="w-4 h-4" />

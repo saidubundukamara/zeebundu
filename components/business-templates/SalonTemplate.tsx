@@ -74,14 +74,21 @@ export function SalonTemplate({ business, content, template, preview = false }: 
       }))
     : [];
 
+  useEffect(() => {
+    // Clamp active index when services length changes
+    if (activeService >= services.length) {
+      setActiveService(0);
+    }
+  }, [services.length]);
+
   const stats = (statsContent?.stats && statsContent.stats.length > 0)
     ? statsContent.stats.map((s: any) => ({ number: s.value, label: s.label }))
     : [
-      { number: "15+", label: "Happy Patients" },
-      { number: "10+", label: "Premium Products" },
-      { number: "15+", label: "Beauty Experts" },
-      { number: "10+", label: "Years Experience" },
-    ];
+    { number: "15+", label: "Happy Patients" },
+    { number: "10+", label: "Premium Products" },
+    { number: "15+", label: "Beauty Experts" },
+    { number: "10+", label: "Years Experience" },
+  ];
 
   const brands = [
     "BeautyBox",
@@ -223,7 +230,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                       →
                     </span>
                   </a>
-                </div>   
+                </div>
               </div>
             </div>
           </div>
@@ -329,78 +336,78 @@ export function SalonTemplate({ business, content, template, preview = false }: 
               ))
             ) : (
               <>
-                <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                    <Star className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="mb-4 text-xl font-bold text-black">
-                    Expert Stylists
-                  </h3>
-                  <p className="leading-relaxed text-gray-600">
-                    Our certified professionals have years of experience and stay
-                    updated with the latest trends and techniques.
-                  </p>
-                </div>
-                <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                    <Scissors className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="mb-4 text-xl font-bold text-black">
-                    Premium Products
-                  </h3>
-                  <p className="leading-relaxed text-gray-600">
-                    We use only the finest, salon-grade products that nourish your
-                    hair while delivering stunning results.
-                  </p>
-                </div>
-                <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                    <Clock className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="mb-4 text-xl font-bold text-black">
-                    Personalized Care
-                  </h3>
-                  <p className="leading-relaxed text-gray-600">
-                    Every client receives individual attention with customized
-                    treatments tailored to their unique needs.
-                  </p>
-                </div>
-                <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                    <Star className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="mb-4 text-xl font-bold text-black">
-                    Luxury Experience
-                  </h3>
-                  <p className="leading-relaxed text-gray-600">
-                    Relax in our modern, comfortable environment designed to make
-                    your visit a truly pampering experience.
-                  </p>
-                </div>
-                <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                    <Clock className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="mb-4 text-xl font-bold text-black">
-                    Flexible Scheduling
-                  </h3>
-                  <p className="leading-relaxed text-gray-600">
-                    Book appointments that fit your busy lifestyle with our
-                    convenient online booking system.
-                  </p>
-                </div>
-                <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                    <Scissors className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="mb-4 text-xl font-bold text-black">
-                    Satisfaction Guarantee
-                  </h3>
-                  <p className="leading-relaxed text-gray-600">
-                    We're committed to your happiness and will work with you until
-                    you love your new look.
-                  </p>
-                </div>
+            <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                <Star className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="mb-4 text-xl font-bold text-black">
+                Expert Stylists
+              </h3>
+              <p className="leading-relaxed text-gray-600">
+                Our certified professionals have years of experience and stay
+                updated with the latest trends and techniques.
+              </p>
+            </div>
+            <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                <Scissors className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="mb-4 text-xl font-bold text-black">
+                Premium Products
+              </h3>
+              <p className="leading-relaxed text-gray-600">
+                We use only the finest, salon-grade products that nourish your
+                hair while delivering stunning results.
+              </p>
+            </div>
+            <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                <Clock className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="mb-4 text-xl font-bold text-black">
+                Personalized Care
+              </h3>
+              <p className="leading-relaxed text-gray-600">
+                Every client receives individual attention with customized
+                treatments tailored to their unique needs.
+              </p>
+            </div>
+            <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                <Star className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="mb-4 text-xl font-bold text-black">
+                Luxury Experience
+              </h3>
+              <p className="leading-relaxed text-gray-600">
+                Relax in our modern, comfortable environment designed to make
+                your visit a truly pampering experience.
+              </p>
+            </div>
+            <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                <Clock className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="mb-4 text-xl font-bold text-black">
+                Flexible Scheduling
+              </h3>
+              <p className="leading-relaxed text-gray-600">
+                Book appointments that fit your busy lifestyle with our
+                convenient online booking system.
+              </p>
+            </div>
+            <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                <Scissors className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="mb-4 text-xl font-bold text-black">
+                Satisfaction Guarantee
+              </h3>
+              <p className="leading-relaxed text-gray-600">
+                We're committed to your happiness and will work with you until
+                you love your new look.
+              </p>
+            </div>
               </>
             )}
           </div>
@@ -467,28 +474,28 @@ export function SalonTemplate({ business, content, template, preview = false }: 
             {/* Right Side - Active Service Image */}
             <div className="relative">
               {services[activeService] && services[activeService].image && (
-                <img
-                  src={services[activeService].image}
-                  alt={services[activeService].name}
-                  className="object-cover w-full h-96 rounded-3xl shadow-lg"
-                />
+              <img
+                src={services[activeService].image}
+                alt={services[activeService].name}
+                className="object-cover w-full h-96 rounded-3xl shadow-lg"
+              />
               )}
               {services[activeService] && (
-                <div className="absolute bottom-6 left-6 p-4 rounded-2xl backdrop-blur-sm bg-white/90">
-                  <h4 className="mb-2 font-semibold text-gray-900">
-                    {services[activeService].name}
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
+              <div className="absolute bottom-6 left-6 p-4 rounded-2xl backdrop-blur-sm bg-white/90">
+                <h4 className="mb-2 font-semibold text-gray-900">
+                  {services[activeService].name}
+                </h4>
+                <div className="flex flex-wrap gap-2">
                     {services[activeService].features.map((feature: any, idx: number) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-1 text-xs text-white bg-black rounded-full"
-                      >
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
+                    <span
+                      key={idx}
+                      className="px-2 py-1 text-xs text-white bg-black rounded-full"
+                    >
+                      {feature}
+                    </span>
+                  ))}
                 </div>
+              </div>
               )}
             </div>
           </div>
@@ -510,7 +517,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
             </h2>
           </div>
 
-              <div className="grid gap-8 mb-16 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-8 mb-16 md:grid-cols-2 lg:grid-cols-4">
                 {(stats && stats.length >= 4 ? stats.slice(0,4) : testimonials).map((item: any, index: number) => (
               <div key={index} className="p-6 text-center bg-white rounded-2xl">
                 <div className="mb-2 text-3xl font-bold text-black">
