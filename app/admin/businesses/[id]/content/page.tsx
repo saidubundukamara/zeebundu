@@ -94,6 +94,7 @@ export default function BusinessContentPage() {
   const [business, setBusiness] = useState<any>(null);
   const [sections, setSections] = useState<ContentSection[]>([]);
   const [activeTab, setActiveTab] = useState("hero");
+  const [addServiceOpenId, setAddServiceOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBusinessContent();
@@ -433,9 +434,9 @@ export default function BusinessContentPage() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-medium">Services</label>
-          <Dialog modal={false}>
+          <Dialog modal={false} open={addServiceOpenId === section.id} onOpenChange={(o) => setAddServiceOpenId(o ? section.id : null)}>
             <DialogTrigger asChild>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" onClick={() => setAddServiceOpenId(section.id)}>
                 <Plus className="w-4 h-4 mr-1" />
                 Add Service
               </Button>
@@ -494,7 +495,9 @@ export default function BusinessContentPage() {
                     ? [...section.content.services, newService]
                     : [newService];
 
-                  const newContent = { ...section.content, services: nextServices };
+                  // Remove any empty placeholder services just in case
+                  const cleanedServices = nextServices.filter((s: any) => (s?.name || s?.title)?.trim());
+                  const newContent = { ...section.content, services: cleanedServices };
 
                   // Update local state
                   setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
@@ -502,6 +505,7 @@ export default function BusinessContentPage() {
                   // Persist immediately
                   try {
                     await saveSection(section.id, newContent);
+                    setAddServiceOpenId(null);
                   } catch (e) {
                     console.warn('Failed to persist new service immediately, it remains in local state.');
                   }
@@ -513,7 +517,7 @@ export default function BusinessContentPage() {
           </Dialog>
         </div>
         <div className="space-y-3">
-          {section.content.services?.map((service: any, index: number) => (
+          {section.content.services?.filter((service: any) => (service?.name || service?.title)?.trim()).map((service: any, index: number) => (
             <Card key={index}>
               <CardContent className="pt-4 space-y-2">
                 <div className="flex items-center justify-between">
@@ -596,7 +600,14 @@ export default function BusinessContentPage() {
         </div>
       </div>
       <Button 
-        onClick={() => saveSection(section.id, section.content)}
+        onClick={() => {
+          const cleaned = {
+            ...section.content,
+            services: (section.content.services || []).filter((svc: any) => (svc?.name || svc?.title)?.trim())
+          };
+          setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: cleaned } : s));
+          return saveSection(section.id, cleaned);
+        }}
         disabled={isSaving}
       >
         {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}

@@ -462,40 +462,46 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                       <div className="text-2xl font-bold text-black">
                         {service.price}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {service.duration}
-                      </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Right Side - Active Service Image */}
-            <div className="relative">
-              {services[activeService] && services[activeService].image && (
-              <img
-                src={services[activeService].image}
-                alt={services[activeService].name}
-                className="object-cover w-full h-96 rounded-3xl shadow-lg"
-              />
+            {/* Right Side - Active Service Panel (stable layout) */}
+            <div className="relative h-96">
+              {services[activeService] && services[activeService].image ? (
+                <img
+                  src={services[activeService].image}
+                  alt={services[activeService].name}
+                  className="object-cover w-full h-full rounded-3xl shadow-lg"
+                />
+              ) : (
+                <div
+                  className="w-full h-full rounded-3xl shadow-lg"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(243,230,221,1) 0%, rgba(250,245,241,1) 100%)",
+                  }}
+                />
               )}
               {services[activeService] && (
-              <div className="absolute bottom-6 left-6 p-4 rounded-2xl backdrop-blur-sm bg-white/90">
-                <h4 className="mb-2 font-semibold text-gray-900">
-                  {services[activeService].name}
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                    {services[activeService].features.map((feature: any, idx: number) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-1 text-xs text-white bg-black rounded-full"
-                    >
-                      {feature}
-                    </span>
-                  ))}
+                <div className="absolute bottom-6 left-6 p-4 max-w-[85%] rounded-2xl backdrop-blur-sm bg-white/90">
+                  <div className="flex flex-wrap gap-2 max-h-20 overflow-y-auto pr-1">
+                    {[
+                      "Professional Stylists",
+                      "Personalized Care",
+                      "Attention to Detail",
+                    ].map((feature, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-1 text-xs text-white bg-black rounded-full whitespace-nowrap"
+                      >
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
               )}
             </div>
           </div>
