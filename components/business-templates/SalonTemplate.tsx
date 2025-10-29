@@ -57,7 +57,22 @@ export function SalonTemplate({ business, content, template, preview = false }: 
     return () => observer.disconnect();
   }, []);
 
-  const services = [
+  const hero = (content && (content as any).hero) || null;
+  const statsContent = (content && (content as any).stats) || null;
+  const servicesContent = (content && (content as any).services) || null;
+  const featuresContent = (content && (content as any).features) || null;
+  const contactContent = (content && (content as any).contact) || null;
+
+  const services = (servicesContent?.services && servicesContent.services.length > 0)
+    ? servicesContent.services.map((s: any) => ({
+        name: s.title || s.name,
+        price: s.price || '',
+        duration: s.duration || '',
+        description: s.description || '',
+        image: s.image || 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&h=600&fit=crop&crop=center',
+        features: Array.isArray(s.features) ? s.features : [],
+      }))
+    : [
     {
       name: "Hair Styling",
       price: "$85",
@@ -101,12 +116,14 @@ export function SalonTemplate({ business, content, template, preview = false }: 
     },
   ];
 
-  const stats = [
-    { number: "15+", label: "Happy Patients" },
-    { number: "10+", label: "Premium Products" },
-    { number: "15+", label: "Beauty Experts" },
-    { number: "10+", label: "Years Experience" },
-  ];
+  const stats = (statsContent?.stats && statsContent.stats.length > 0)
+    ? statsContent.stats.map((s: any) => ({ number: s.value, label: s.label }))
+    : [
+      { number: "15+", label: "Happy Patients" },
+      { number: "10+", label: "Premium Products" },
+      { number: "15+", label: "Beauty Experts" },
+      { number: "10+", label: "Years Experience" },
+    ];
 
   const brands = [
     "BeautyBox",
@@ -166,7 +183,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
             {/* Left Section */}
             <div className="flex flex-col order-2 gap-4 sm:gap-6 lg:order-1">
               <h1 className="mb-4 text-3xl font-bold tracking-tight leading-tight text-center sm:mb-8 sm:text-4xl lg:text-5xl text-slate-700 lg:text-left">
-                Enhancing your beauty to let you shine
+                {hero?.title || 'Enhancing your beauty to let you shine'}
               </h1>
 
               <div className="flex justify-center items-center mx-auto mb-3 w-10 h-10 text-lg font-bold text-white bg-gray-800 rounded-full lg:justify-start sm:mb-5 lg:mx-0"></div>
@@ -181,7 +198,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                   }}
                 >
                   <img
-                    src="https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"
+                    src={hero?.backgroundImage || "https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"}
                     alt="Beauty treatment"
                     className="object-cover w-full h-full"
                   />
@@ -200,7 +217,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 }}
               >
                 <img
-                  src="https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"
+                  src={hero?.backgroundImage || "https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"}
                   alt="Woman applying skincare"
                   className="object-cover w-full h-full"
                 />
@@ -219,7 +236,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                   }}
                 >
                   <img
-                    src="https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"
+                    src={hero?.backgroundImage || "https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"}
                     alt="Woman with flowers"
                     className="object-cover w-full h-full"
                   />
@@ -233,12 +250,10 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 }}
               >
                 <h2 className="mb-1 text-2xl font-bold text-center sm:text-3xl text-slate-700 lg:text-left">
-                  Our Story
+                  {((content as any)?.about?.title) || 'Our Story'}
                 </h2>
                 <p className="mb-3 text-sm text-center text-gray-600 lg:text-left">
-                  Our goal is to bring out the best version of you by
-                  highlighting your natural beauty with personalized care and
-                  attention to detail.
+                  {((content as any)?.about?.description) || 'Our goal is to bring out the best version of you by highlighting your natural beauty with personalized care and attention to detail.'}
                 </p>
                 <div className="flex justify-center lg:justify-start">
                   <a
@@ -250,7 +265,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                       →
                     </span>
                   </a>
-                </div>
+                </div>   
               </div>
             </div>
           </div>
@@ -269,19 +284,19 @@ export function SalonTemplate({ business, content, template, preview = false }: 
             >
               <div className="relative px-2 text-center sm:px-4">
                 <div className="mb-1 text-2xl font-extrabold sm:mb-2 sm:text-3xl lg:text-4xl text-slate-700">
-                  15+
+                  {stats[0]?.number}
                 </div>
                 <div className="text-xs font-semibold tracking-wide text-gray-600 sm:text-sm">
-                  Happy Patients
+                  {stats[0]?.label}
                 </div>
               </div>
 
               <div className="relative px-2 text-center sm:px-4">
                 <div className="mb-1 text-2xl font-extrabold sm:mb-2 sm:text-3xl lg:text-4xl text-slate-700">
-                  10+
+                  {stats[1]?.number}
                 </div>
                 <div className="text-xs font-semibold tracking-wide text-gray-600 sm:text-sm">
-                  Premium Products
+                  {stats[1]?.label}
                 </div>
               </div>
 
@@ -308,19 +323,19 @@ export function SalonTemplate({ business, content, template, preview = false }: 
 
               <div className="relative px-2 text-center sm:px-4">
                 <div className="mb-1 text-2xl font-extrabold sm:mb-2 sm:text-3xl lg:text-4xl text-slate-700">
-                  15+
+                  {stats[2]?.number}
                 </div>
                 <div className="text-xs font-semibold tracking-wide text-gray-600 sm:text-sm">
-                  Beauty Experts
+                  {stats[2]?.label}
                 </div>
               </div>
 
               <div className="relative px-2 text-center sm:px-4">
                 <div className="mb-1 text-2xl font-extrabold sm:mb-2 sm:text-3xl lg:text-4xl text-slate-700">
-                  10+
+                  {stats[3]?.number}
                 </div>
                 <div className="text-xs font-semibold tracking-wide text-gray-600 sm:text-sm">
-                  Years Experience
+                  {stats[3]?.label}
                 </div>
               </div>
             </div>
@@ -344,89 +359,92 @@ export function SalonTemplate({ business, content, template, preview = false }: 
 
           {/* Features Grid */}
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {/* Feature 1 */}
-            <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                <Star className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="mb-4 text-xl font-bold text-black">
-                Expert Stylists
-              </h3>
-              <p className="leading-relaxed text-gray-600">
-                Our certified professionals have years of experience and stay
-                updated with the latest trends and techniques.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                <Scissors className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="mb-4 text-xl font-bold text-black">
-                Premium Products
-              </h3>
-              <p className="leading-relaxed text-gray-600">
-                We use only the finest, salon-grade products that nourish your
-                hair while delivering stunning results.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                <Clock className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="mb-4 text-xl font-bold text-black">
-                Personalized Care
-              </h3>
-              <p className="leading-relaxed text-gray-600">
-                Every client receives individual attention with customized
-                treatments tailored to their unique needs.
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                <Star className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="mb-4 text-xl font-bold text-black">
-                Luxury Experience
-              </h3>
-              <p className="leading-relaxed text-gray-600">
-                Relax in our modern, comfortable environment designed to make
-                your visit a truly pampering experience.
-              </p>
-            </div>
-
-            {/* Feature 5 */}
-            <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                <Clock className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="mb-4 text-xl font-bold text-black">
-                Flexible Scheduling
-              </h3>
-              <p className="leading-relaxed text-gray-600">
-                Book appointments that fit your busy lifestyle with our
-                convenient online booking system.
-              </p>
-            </div>
-
-            {/* Feature 6 */}
-            <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
-              <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
-                <Scissors className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="mb-4 text-xl font-bold text-black">
-                Satisfaction Guarantee
-              </h3>
-              <p className="leading-relaxed text-gray-600">
-                We're committed to your happiness and will work with you until
-                you love your new look.
-              </p>
-            </div>
+            {Array.isArray(featuresContent?.features) && featuresContent.features.length > 0 ? (
+              featuresContent.features.slice(0, 6).map((feat: string, idx: number) => (
+                <div key={idx} className={`p-8 text-center ${idx % 2 === 0 ? 'bg-[#f3e6dd]' : 'bg-white'} rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2`}>
+                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                    {idx % 3 === 0 ? <Star className="w-8 h-8 text-white" /> : idx % 3 === 1 ? <Scissors className="w-8 h-8 text-white" /> : <Clock className="w-8 h-8 text-white" />}
+                  </div>
+                  <h3 className="mb-4 text-xl font-bold text-black">{feat}</h3>
+                  <p className="leading-relaxed text-gray-600">{business?.description || 'We provide premium salon services tailored to you.'}</p>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                    <Star className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="mb-4 text-xl font-bold text-black">
+                    Expert Stylists
+                  </h3>
+                  <p className="leading-relaxed text-gray-600">
+                    Our certified professionals have years of experience and stay
+                    updated with the latest trends and techniques.
+                  </p>
+                </div>
+                <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                    <Scissors className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="mb-4 text-xl font-bold text-black">
+                    Premium Products
+                  </h3>
+                  <p className="leading-relaxed text-gray-600">
+                    We use only the finest, salon-grade products that nourish your
+                    hair while delivering stunning results.
+                  </p>
+                </div>
+                <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                    <Clock className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="mb-4 text-xl font-bold text-black">
+                    Personalized Care
+                  </h3>
+                  <p className="leading-relaxed text-gray-600">
+                    Every client receives individual attention with customized
+                    treatments tailored to their unique needs.
+                  </p>
+                </div>
+                <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                    <Star className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="mb-4 text-xl font-bold text-black">
+                    Luxury Experience
+                  </h3>
+                  <p className="leading-relaxed text-gray-600">
+                    Relax in our modern, comfortable environment designed to make
+                    your visit a truly pampering experience.
+                  </p>
+                </div>
+                <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                    <Clock className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="mb-4 text-xl font-bold text-black">
+                    Flexible Scheduling
+                  </h3>
+                  <p className="leading-relaxed text-gray-600">
+                    Book appointments that fit your busy lifestyle with our
+                    convenient online booking system.
+                  </p>
+                </div>
+                <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
+                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                    <Scissors className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="mb-4 text-xl font-bold text-black">
+                    Satisfaction Guarantee
+                  </h3>
+                  <p className="leading-relaxed text-gray-600">
+                    We're committed to your happiness and will work with you until
+                    you love your new look.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Call to Action */}
@@ -451,7 +469,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
           <div className="grid gap-8 md:grid-cols-2">
             {/* Left Side - Service List */}
             <div className="space-y-6">
-              {services.map((service, index) => (
+              {services.map((service: any, index: number) => (
                 <div
                   key={index}
                   className={`p-6 rounded-2xl cursor-pointer transition-all duration-300 ${
@@ -499,7 +517,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                   {services[activeService].name}
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {services[activeService].features.map((feature, idx) => (
+                  {services[activeService].features.map((feature: any, idx: number) => (
                     <span
                       key={idx}
                       className="px-2 py-1 text-xs text-white bg-black rounded-full"
@@ -528,11 +546,11 @@ export function SalonTemplate({ business, content, template, preview = false }: 
             </h2>
           </div>
 
-          <div className="grid gap-8 mb-16 md:grid-cols-2 lg:grid-cols-4">
-            {testimonials.map((item, index) => (
+              <div className="grid gap-8 mb-16 md:grid-cols-2 lg:grid-cols-4">
+                {(stats && stats.length >= 4 ? stats.slice(0,4) : testimonials).map((item: any, index: number) => (
               <div key={index} className="p-6 text-center bg-white rounded-2xl">
                 <div className="mb-2 text-3xl font-bold text-black">
-                  {item.rating}
+                  {(item as any).rating || (item as any).number}
                 </div>
                 <div className="text-gray-600">{item.label}</div>
               </div>
@@ -546,10 +564,10 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 <Award className="w-8 h-8 text-white" />
               </div>
               <h3 className="mb-3 text-xl font-semibold text-black">
-                Premium Quality
+                {(featuresContent?.features && featuresContent.features[0]) || 'Premium Quality'}
               </h3>
               <p className="text-gray-600">
-                Top-tier products and services for the best results
+                {business?.description || 'Top-tier products and services for the best results'}
               </p>
             </div>
 
@@ -558,10 +576,10 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 <Users className="w-8 h-8 text-white" />
               </div>
               <h3 className="mb-3 text-xl font-semibold text-black">
-                Expert Team
+                {(featuresContent?.features && featuresContent.features[1]) || 'Expert Team'}
               </h3>
               <p className="text-gray-600">
-                Skilled and certified beauty professionals
+                {business?.description || 'Skilled and certified beauty professionals'}
               </p>
             </div>
 
@@ -570,10 +588,10 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 <Heart className="w-8 h-8 text-white" />
               </div>
               <h3 className="mb-3 text-xl font-semibold text-black">
-                Personalized Care
+                {(featuresContent?.features && featuresContent.features[2]) || 'Personalized Care'}
               </h3>
               <p className="text-gray-600">
-                Customized treatments for your unique needs
+                {business?.description || 'Customized treatments for your unique needs'}
               </p>
             </div>
           </div>
@@ -732,7 +750,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                   <div className="mb-2 text-lg font-semibold text-black">
                     Call Us
                   </div>
-                  <div className="text-gray-600">+1 (555) BEAUTY</div>
+                  <div className="text-gray-600">{contactContent?.phone || business?.contact?.phone || '+1 (555) BEAUTY'}</div>
                 </div>
               </div>
 
@@ -744,7 +762,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                   <div className="mb-2 text-lg font-semibold text-black">
                     Email Us
                   </div>
-                  <div className="text-gray-600">hello@bundusalon.com</div>
+                  <div className="text-gray-600">{contactContent?.email || business?.contact?.email || 'hello@bundusalon.com'}</div>
                 </div>
               </div>
 
@@ -757,7 +775,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                     Visit Us
                   </div>
                   <div className="text-gray-600">
-                    123 Beauty Street, City Center
+                    {contactContent?.address || business?.contact?.address || '123 Beauty Street, City Center'}
                   </div>
                 </div>
               </div>
@@ -840,7 +858,6 @@ export function SalonTemplate({ business, content, template, preview = false }: 
         </div>
       </section>
 
-      <Footer />
     </div>
   );
 }
