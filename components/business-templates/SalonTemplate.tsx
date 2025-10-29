@@ -63,58 +63,16 @@ export function SalonTemplate({ business, content, template, preview = false }: 
   const featuresContent = (content && (content as any).features) || null;
   const contactContent = (content && (content as any).contact) || null;
 
-  const services = (servicesContent?.services && servicesContent.services.length > 0)
+  const services = Array.isArray(servicesContent?.services)
     ? servicesContent.services.map((s: any) => ({
-        name: s.title || s.name,
+        name: s.title || s.name || '',
         price: s.price || '',
         duration: s.duration || '',
         description: s.description || '',
-        image: s.image || 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&h=600&fit=crop&crop=center',
+        image: s.image || '',
         features: Array.isArray(s.features) ? s.features : [],
       }))
-    : [
-    {
-      name: "Hair Styling",
-      price: "$85",
-      duration: "60 min",
-      description: "Expert cuts, color, and styling for your perfect look",
-      image:
-        "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&h=600&fit=crop&crop=center",
-      features: ["Consultation", "Wash & Cut", "Styling", "Aftercare"],
-    },
-    {
-      name: "Facial Treatments",
-      price: "$120",
-      duration: "75 min",
-      description: "Rejuvenating skincare treatments for glowing skin",
-      image:
-        "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&h=600&fit=crop&crop=center",
-      features: [
-        "Deep Cleansing",
-        "Exfoliation",
-        "Mask Treatment",
-        "Moisturizing",
-      ],
-    },
-    {
-      name: "Nail Care",
-      price: "$45",
-      duration: "45 min",
-      description: "Creative nail designs and professional care",
-      image:
-        "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&h=600&fit=crop&crop=center",
-      features: ["Manicure", "Pedicure", "Nail Art", "Polish"],
-    },
-    {
-      name: "Bridal Package",
-      price: "$350",
-      duration: "4 hours",
-      description: "Complete bridal transformation for your special day",
-      image:
-        "https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=800&h=600&fit=crop&crop=center",
-      features: ["Hair Styling", "Makeup", "Nail Care", "Touch-ups"],
-    },
-  ];
+    : [];
 
   const stats = (statsContent?.stats && statsContent.stats.length > 0)
     ? statsContent.stats.map((s: any) => ({ number: s.value, label: s.label }))
@@ -462,10 +420,11 @@ export function SalonTemplate({ business, content, template, preview = false }: 
         <div className="mx-auto max-w-7xl">
           <div className="mb-16 text-center">
             <h2 className="mb-6 text-4xl font-bold text-black">
-              Our Categories
+              {servicesContent?.title}
             </h2>
           </div>
 
+          {services.length > 0 && (
           <div className="grid gap-8 md:grid-cols-2">
             {/* Left Side - Service List */}
             <div className="space-y-6">
@@ -507,28 +466,33 @@ export function SalonTemplate({ business, content, template, preview = false }: 
 
             {/* Right Side - Active Service Image */}
             <div className="relative">
-              <img
-                src={services[activeService].image}
-                alt={services[activeService].name}
-                className="object-cover w-full h-96 rounded-3xl shadow-lg"
-              />
-              <div className="absolute bottom-6 left-6 p-4 rounded-2xl backdrop-blur-sm bg-white/90">
-                <h4 className="mb-2 font-semibold text-gray-900">
-                  {services[activeService].name}
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {services[activeService].features.map((feature: any, idx: number) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-1 text-xs text-white bg-black rounded-full"
-                    >
-                      {feature}
-                    </span>
-                  ))}
+              {services[activeService] && services[activeService].image && (
+                <img
+                  src={services[activeService].image}
+                  alt={services[activeService].name}
+                  className="object-cover w-full h-96 rounded-3xl shadow-lg"
+                />
+              )}
+              {services[activeService] && (
+                <div className="absolute bottom-6 left-6 p-4 rounded-2xl backdrop-blur-sm bg-white/90">
+                  <h4 className="mb-2 font-semibold text-gray-900">
+                    {services[activeService].name}
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {services[activeService].features.map((feature: any, idx: number) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-1 text-xs text-white bg-black rounded-full"
+                      >
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
+          )}
         </div>
       </section>
 

@@ -431,30 +431,64 @@ export default function BusinessContentPage() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-medium">Services</label>
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="outline" onClick={() => {
+            const newService = {
+              name: '',
+              title: '',
+              description: '',
+              icon: '',
+              image: '',
+              price: '',
+              duration: '',
+              features: [] as string[],
+              category: ''
+            };
+            const newContent = { 
+              ...section.content, 
+              services: Array.isArray(section.content.services) 
+                ? [...section.content.services, newService] 
+                : [newService]
+            };
+            setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+          }}>
             <Plus className="w-4 h-4 mr-1" />
             Add Service
           </Button>
         </div>
         <div className="space-y-3">
-          {section.content.services.map((service: any, index: number) => (
+          {section.content.services?.map((service: any, index: number) => (
             <Card key={index}>
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-muted-foreground">Service {index + 1}</div>
+                  <Button size="icon" variant="ghost" onClick={() => {
+                    const newServices = (section.content.services || []).filter((_: any, i: number) => i !== index);
+                    const newContent = { ...section.content, services: newServices };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <Input
-                    value={service.name}
+                    value={service.name ?? ''}
                     onChange={(e) => {
-                      const newServices = [...section.content.services];
-                      newServices[index] = { ...service, name: e.target.value };
+                      const value = e.target.value;
+                      const newServices = [...(section.content.services || [])];
+                      newServices[index] = { 
+                        ...service, 
+                        name: value,
+                        title: (service.title ?? '') === (service.name ?? '') || !service.title ? value : service.title
+                      };
                       const newContent = { ...section.content, services: newServices };
                       setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
                     }}
                     placeholder="Service name"
                   />
                   <Input
-                    value={service.icon}
+                    value={service.icon ?? ''}
                     onChange={(e) => {
-                      const newServices = [...section.content.services];
+                      const newServices = [...(section.content.services || [])];
                       newServices[index] = { ...service, icon: e.target.value };
                       const newContent = { ...section.content, services: newServices };
                       setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
@@ -462,10 +496,42 @@ export default function BusinessContentPage() {
                     placeholder="Icon name"
                   />
                 </div>
-                <Textarea
-                  value={service.description}
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    value={service.price ?? ''}
+                    onChange={(e) => {
+                      const newServices = [...(section.content.services || [])];
+                      newServices[index] = { ...service, price: e.target.value };
+                      const newContent = { ...section.content, services: newServices };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Price (e.g. $85)"
+                  />
+                  <Input
+                    value={service.duration ?? ''}
+                    onChange={(e) => {
+                      const newServices = [...(section.content.services || [])];
+                      newServices[index] = { ...service, duration: e.target.value };
+                      const newContent = { ...section.content, services: newServices };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Duration (e.g. 60 min)"
+                  />
+                </div>
+                <Input
+                  value={service.image ?? ''}
                   onChange={(e) => {
-                    const newServices = [...section.content.services];
+                    const newServices = [...(section.content.services || [])];
+                    newServices[index] = { ...service, image: e.target.value };
+                    const newContent = { ...section.content, services: newServices };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}
+                  placeholder="Image URL"
+                />
+                <Textarea
+                  value={service.description ?? ''}
+                  onChange={(e) => {
+                    const newServices = [...(section.content.services || [])];
                     newServices[index] = { ...service, description: e.target.value };
                     const newContent = { ...section.content, services: newServices };
                     setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));

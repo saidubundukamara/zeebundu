@@ -15,6 +15,9 @@ import { LivestockTemplate } from '@/components/business-templates/LivestockTemp
 import { SalonTemplate } from '@/components/business-templates/SalonTemplate';
 import { WaterProductionTemplate } from '@/components/business-templates/WaterProductionTemplate';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface PageProps {
   params: Promise<{
     slug: string;
