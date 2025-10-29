@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown } from "lucide-react";
@@ -18,6 +18,8 @@ const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const [services, setServices] = useState<{ name: string; path: string }[]>([]);
+  const [servicesLoading, setServicesLoading] = useState<boolean>(false);
   const pathname = usePathname();
 
   const mainNavItems = [
@@ -26,23 +28,29 @@ const Navigation: React.FC<NavigationProps> = ({
     { name: "Services", path: "#", hasDropdown: true },
   ];
 
-  const services = [
-    { name: "Gas Stations", path: "/business/gas-stations" },
-    { name: "Hotels & Resorts", path: "/business/hotels-resorts" },
-    { name: "ZEEMART (Mini Mart)", path: "/business/zeemart" },
-    { name: "Pharmacy", path: "/business/pharmacy" },
-    { name: "Construction Materials", path: "/business/construction-materials" },
-    { name: "Foreign Exchange", path: "/business/foreign-exchange" },
-    { name: "Farming", path: "/business/farming" },
-    { name: "Livestock", path: "/business/livestock" },
-    { name: "Poultry", path: "/business/poultry" },
-    { name: "Fish Farming", path: "/business/fish-farming" },
-    { name: "Petroleum Services", path: "/business/petroleum-services" },
-    { name: "Water Production", path: "/business/water-production" },
-    { name: "Natural Juices Production", path: "/business/natural-juices" },
-    { name: "Cosmetics Salon", path: "/business/cosmetics-salon" },
-    { name: "Beverages", path: "/business/beverages" },
-  ];
+  useEffect(() => {
+    let isCancelled = false;
+    async function loadServices() {
+      try {
+        setServicesLoading(true);
+        const response = await fetch('/api/businesses?status=active');
+        const result = await response.json();
+        if (!isCancelled && result?.success && Array.isArray(result.data)) {
+          const items = result.data.map((b: { name: string; slug: string }) => ({
+            name: b.name,
+            path: `/business/${b.slug}`,
+          }));
+          setServices(items);
+        }
+      } catch (_err) {
+        // ignore; dropdown will simply be empty on failure
+      } finally {
+        if (!isCancelled) setServicesLoading(false);
+      }
+    }
+    loadServices();
+    return () => { isCancelled = true; };
+  }, []);
 
   const scrollToSection = (sectionId: string) => {
     const section = document.getElementById(sectionId);
@@ -122,7 +130,13 @@ const Navigation: React.FC<NavigationProps> = ({
                       }`}
                     >
                       <div className="overflow-y-auto py-2 max-h-96">
-                        {services.map((service) => (
+                        {servicesLoading && (
+                          <div className="px-4 py-2 text-sm text-gray-500">Loading...</div>
+                        )}
+                        {!servicesLoading && services.length === 0 && (
+                          <div className="px-4 py-2 text-sm text-gray-500">No services available</div>
+                        )}
+                        {!servicesLoading && services.map((service) => (
                           <Link
                             key={service.path}
                             href={service.path}
@@ -202,7 +216,13 @@ const Navigation: React.FC<NavigationProps> = ({
                       {isServicesOpen && (
                         <div className="overflow-y-auto absolute right-0 left-0 top-full z-50 mt-1 max-h-80 bg-white rounded-lg border border-gray-200 shadow-lg">
                           <div className="py-2">
-                            {services.map((service) => (
+                            {servicesLoading && (
+                              <div className="px-4 py-2 text-sm text-gray-500">Loading...</div>
+                            )}
+                            {!servicesLoading && services.length === 0 && (
+                              <div className="px-4 py-2 text-sm text-gray-500">No services available</div>
+                            )}
+                            {!servicesLoading && services.map((service) => (
                               <Link
                                 key={service.path}
                                 href={service.path}

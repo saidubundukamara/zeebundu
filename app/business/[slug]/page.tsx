@@ -9,6 +9,11 @@ import { GasStationTemplate } from '@/components/business-templates/GasStationTe
 import { HotelTemplate } from '@/components/business-templates/HotelTemplate';
 import { FarmingTemplate } from '@/components/business-templates/FarmingTemplate';
 import { PharmacyTemplate } from '@/components/business-templates/PharmacyTemplate';
+import { ConstructionMaterialsTemplate } from '@/components/business-templates/ConstructionMaterialsTemplate';
+import { ForeignExchangTemplate } from '@/components/business-templates/ForeignExchangeTemplate';
+import { LivestockTemplate } from '@/components/business-templates/LivestockTemplate';
+import { SalonTemplate } from '@/components/business-templates/SalonTemplate';
+import { WaterProductionTemplate } from '@/components/business-templates/WaterProductionTemplate';
 
 interface PageProps {
   params: Promise<{
@@ -86,6 +91,11 @@ function getTemplateComponent(templateName: string) {
     'agriculture': FarmingTemplate,
     'pharmacy': PharmacyTemplate,
     'healthcare': PharmacyTemplate,
+    'construction': ConstructionMaterialsTemplate,
+    'livestock': LivestockTemplate,
+    'foreign-exchange': ForeignExchangTemplate,
+    'salon': SalonTemplate,
+    'water-production': WaterProductionTemplate,
   };
   
   return templates[templateName as keyof typeof templates];

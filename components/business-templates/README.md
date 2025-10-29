@@ -102,7 +102,7 @@ export default function YourBusinessTemplate({
     document.querySelectorAll('[id]').forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, []);
-
+0.
   // Icon mapping function (customize for your industry)
   function getServiceIcon(iconName: string) {
     const iconMap: Record<string, React.ReactNode> = {
