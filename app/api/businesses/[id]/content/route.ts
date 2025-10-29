@@ -12,44 +12,116 @@ export async function GET(
     businessId = id;
 
     const repo = new ContentRepository();
-    const contents = await repo.findActiveContentByBusiness(id);
+    // Get latest entries per section (not just active) for admin completeness
+    const all = await repo.findByBusinessId(id);
+    const latestBySection = new Map<string, any>();
+    for (const item of all) {
+      if (!latestBySection.has(item.section)) {
+        latestBySection.set(item.section, item);
+      }
+    }
 
-    // Normalize to admin-friendly array shape
-    const data = contents.map((c) => {
-      const isHero = c.section === 'hero';
-      const isServices = c.section === 'services';
+    const sectionOrder: ContentSection[] = [
+      'hero',
+      'about',
+      'services',
+      'gallery',
+      'testimonials',
+      'contact',
+      'locations',
+      'stats',
+      'features',
+    ];
+
+    const defaults: Record<ContentSection, any> = {
+      hero: {
+        title: '',
+        subtitle: '',
+        description: '',
+        backgroundImage: '',
+        backgroundVideo: '',
+        ctaButtons: [],
+        buttons: [],
+      },
+      about: {
+        title: '',
+        description: '',
+        features: [],
+        stats: [],
+      },
+      services: {
+        title: '',
+        description: '',
+        services: [],
+      },
+      gallery: {
+        title: '',
+        description: '',
+        images: [],
+      },
+      testimonials: {
+        title: '',
+        description: '',
+        testimonials: [],
+      },
+      contact: {
+        title: '',
+        description: '',
+        phone: '',
+        email: '',
+        address: '',
+        hours: '',
+      },
+      locations: {
+        title: '',
+        description: '',
+        locations: [],
+      },
+      stats: {
+        title: '',
+        description: '',
+        stats: [],
+      },
+      features: {
+        title: '',
+        description: '',
+        features: [],
+      },
+    } as any;
+
+    const normalizeServices = (content: any) => ({
+      ...(content || {}),
+      services: Array.isArray(content?.services)
+        ? content.services.map((s: any) => ({
+            name: s?.name ?? s?.title ?? '',
+            title: s?.title ?? s?.name ?? '',
+            description: s?.description ?? '',
+            icon: s?.icon ?? '',
+            image: s?.image ?? '',
+            price: s?.price ?? '',
+            duration: s?.duration ?? '',
+            features: Array.isArray(s?.features) ? s.features : [],
+            category: s?.category ?? '',
+            pricing: s?.pricing ?? undefined,
+          }))
+        : [],
+    });
+
+    const data = sectionOrder.map((section) => {
+      const found = latestBySection.get(section);
+      const isHero = section === 'hero';
+      const isServices = section === 'services';
+      const rawContent = found?.content ?? defaults[section];
       const contentOut = isHero
-        ? {
-            ...(c.content || {}),
-            // Expose admin-friendly alias
-            buttons: (c as any).content?.buttons ?? (c as any).content?.ctaButtons ?? [],
-          }
+        ? { ...(rawContent || {}), buttons: rawContent?.buttons ?? rawContent?.ctaButtons ?? [] }
         : isServices
-        ? {
-            ...(c.content || {}),
-            services: Array.isArray((c as any).content?.services)
-              ? (c as any).content.services.map((s: any) => ({
-                  // Ensure admin editor controlled inputs
-                  name: s?.name ?? s?.title ?? '',
-                  title: s?.title ?? s?.name ?? '',
-                  description: s?.description ?? '',
-                  icon: s?.icon ?? '',
-                  image: s?.image ?? '',
-                  price: s?.price ?? '',
-                  duration: s?.duration ?? '',
-                  features: Array.isArray(s?.features) ? s.features : [],
-                  category: s?.category ?? '',
-                  pricing: s?.pricing ?? undefined,
-                }))
-              : [],
-          }
-        : c.content;
-
+        ? normalizeServices(rawContent)
+        : rawContent;
       return {
-        id: c.section,
-        type: c.section,
-        title: typeof contentOut?.title === 'string' ? contentOut.title : c.section,
-        isActive: c.isActive,
+        id: section,
+        type: section,
+        title: typeof contentOut?.title === 'string' ? contentOut.title : section,
+        isActive: found?.isActive ?? true,
         content: contentOut,
       };
     });

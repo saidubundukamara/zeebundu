@@ -220,7 +220,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 <p className="mb-3 text-sm text-center text-gray-600 lg:text-left">
                   {((content as any)?.about?.description) || 'Our goal is to bring out the best version of you by highlighting your natural beauty with personalized care and attention to detail.'}
                 </p>
-                <div className="flex justify-center lg:justify-start">
+                {/* <div className="flex justify-center lg:justify-start">
                   <a
                     href="#"
                     className="inline-flex gap-2 items-center text-sm font-semibold text-gray-800 no-underline transition-all duration-300 hover:gap-3"
@@ -230,7 +230,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                       →
                     </span>
                   </a>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
