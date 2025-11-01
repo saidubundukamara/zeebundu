@@ -53,6 +53,7 @@ export function MediaPicker({
   const [activeTab, setActiveTab] = useState('library');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     // Only update if the selection actually changed by comparing IDs
@@ -72,10 +73,12 @@ export function MediaPicker({
     const mediaArray = Array.isArray(media) ? media : [media];
     
     if (selectionMode === 'single') {
-      setCurrentSelection(mediaArray.slice(0, 1));
-      setLastSelected(mediaArray[0] || null);
-      if (autoConfirmSingle && mediaArray[0]) {
-        onSelect(mediaArray[0]);
+      const selectedMedia = mediaArray[0];
+      setCurrentSelection([selectedMedia]);
+      setLastSelected(selectedMedia || null);
+      // Always auto-confirm for single selection to avoid confusion
+      if (selectedMedia) {
+        onSelect(selectedMedia);
         setOpen(false);
         return;
       }
@@ -101,9 +104,17 @@ export function MediaPicker({
   const handleConfirmSelection = () => {
     if (selectionMode === 'single') {
       const media = currentSelection[0] || lastSelected || null;
-      if (!media) return;
+      if (!media) {
+        console.warn('No media selected for single selection');
+        return;
+      }
       onSelect(media);
     } else {
+      // For multiple selection, ensure we have selected items
+      if (currentSelection.length === 0) {
+        console.warn('No items selected');
+        return;
+      }
       onSelect(currentSelection);
     }
     setOpen(false);
@@ -138,8 +149,19 @@ export function MediaPicker({
     </Button>
   );
 
+  const handleDialogClose = (openState: boolean) => {
+    if (!openState && !isCancelling && currentSelection.length > 0 && selectionMode === 'multiple') {
+      // Auto-confirm selection when closing dialog (for multiple mode) unless cancelled
+      onSelect(currentSelection);
+    }
+    if (openState) {
+      setIsCancelling(false);
+    }
+    setOpen(openState);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
@@ -297,16 +319,28 @@ export function MediaPicker({
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  setIsCancelling(true);
+                  setOpen(false);
+                }}
               >
                 Cancel
               </Button>
               <Button
-                onClick={handleConfirmSelection}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleConfirmSelection();
+                }}
                 className="flex items-center gap-2"
+                disabled={selectionMode === 'multiple' && currentSelection.length === 0}
               >
                 <Check className="w-4 h-4" />
-                Select {currentSelection.length > 0 && `(${currentSelection.length})`}
+                {selectionMode === 'single' 
+                  ? 'Select' 
+                  : currentSelection.length > 0 
+                    ? `Select ${currentSelection.length} item${currentSelection.length > 1 ? 's' : ''}` 
+                    : 'Select'}
               </Button>
             </div>
           </div>

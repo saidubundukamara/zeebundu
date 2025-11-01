@@ -62,6 +62,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
   const servicesContent = (content && (content as any).services) || null;
   const featuresContent = (content && (content as any).features) || null;
   const contactContent = (content && (content as any).contact) || null;
+  const galleryContent = (content && (content as any).gallery) || null;
 
   const services = Array.isArray(servicesContent?.services)
     ? servicesContent.services.map((s: any) => ({
@@ -215,22 +216,11 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 }}
               >
                 <h2 className="mb-1 text-2xl font-bold text-center sm:text-3xl text-slate-700 lg:text-left">
-                  {((content as any)?.about?.title) || 'Our Story'}
+                  Our Story
                 </h2>
                 <p className="mb-3 text-sm text-center text-gray-600 lg:text-left">
-                  {((content as any)?.about?.description) || 'Our goal is to bring out the best version of you by highlighting your natural beauty with personalized care and attention to detail.'}
+                  {hero?.description || ''}
                 </p>
-                {/* <div className="flex justify-center lg:justify-start">
-                  <a
-                    href="#"
-                    className="inline-flex gap-2 items-center text-sm font-semibold text-gray-800 no-underline transition-all duration-300 hover:gap-3"
-                  >
-                    Read More
-                    <span className="transition-transform duration-300 hover:translate-x-1">
-                      →
-                    </span>
-                  </a>
-                </div> */}
               </div>
             </div>
           </div>
@@ -575,67 +565,41 @@ export function SalonTemplate({ business, content, template, preview = false }: 
         </div>
       </section>
 
-      {/* Team Section */}
+      {/* Gallery Section */}
       <section className="px-4 py-24 bg-white" data-section>
         <div className="mx-auto max-w-7xl">
           <div className="mb-16 text-center">
             <h2 className="mb-6 text-4xl font-bold text-black">
-              We Are Experienced In Making
-              <span className="block text-black">You More Beautiful</span>
+              {galleryContent?.title || 'Our Gallery'}
             </h2>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3">
-            {stylists.map((stylist, index) => (
-              <div
-                key={index}
-                className="overflow-hidden bg-white rounded-3xl shadow-lg transition-shadow duration-300 hover:shadow-xl"
-              >
-                <div className="relative">
-                  <img
-                    src={stylist.image}
-                    alt={stylist.name}
-                    className="object-cover w-full h-64"
-                  />
-                  {/* <div className="absolute top-4 right-4 px-3 py-1 rounded-full backdrop-blur-sm bg-white/90">
-                    <div className="flex gap-1 items-center">
-                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                      <span className="text-sm font-medium">
-                        {stylist.rating}
-                      </span>
+          {galleryContent?.images && galleryContent.images.length > 0 && (
+            <div className="grid gap-8 md:grid-cols-3">
+              {galleryContent.images.slice(0, 6).map((item: any, index: number) => (
+                <div
+                  key={index}
+                  className="overflow-hidden bg-white rounded-3xl shadow-lg transition-shadow duration-300 hover:shadow-xl"
+                >
+                  <div className="relative">
+                    <img
+                      src={item.url || item}
+                      alt={item.alt || item.caption || `Gallery image ${index + 1}`}
+                      className="object-cover w-full h-64"
+                    />
+                  </div>
+
+                  {item.caption && (
+                    <div className="p-6">
+                      <p className="text-sm text-gray-600 truncate">
+                        {item.caption}
+                      </p>
                     </div>
-                  </div> */}
+                  )}
                 </div>
-
-                <div className="p-6">
-                  <h3 className="mb-2 text-xl font-semibold text-black">
-                    {stylist.name}
-                  </h3>
-                  <p className="mb-1 font-medium text-black">
-                    {stylist.specialty}
-                  </p>
-                  <p className="mb-4 text-sm text-gray-600">
-                    {stylist.experience} experience
-                  </p>
-
-                  {/* <div className="flex justify-between items-center">
-                    <div className="flex gap-3">
-                      <button className="flex justify-center items-center w-8 h-8 bg-gray-100 rounded-full transition-colors hover:bg-orange-100">
-                        <Instagram className="w-4 h-4 text-gray-600" />
-                      </button>
-                      <button className="flex justify-center items-center w-8 h-8 bg-gray-100 rounded-full transition-colors hover:bg-orange-100">
-                        <Facebook className="w-4 h-4 text-gray-600" />
-                      </button>
-                    </div>
-
-                    <button className="px-4 py-2 text-sm font-medium text-white bg-black rounded-full transition-colors hover:bg-gray-800">
-                      Book Now
-                    </button>
-                  </div> */}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

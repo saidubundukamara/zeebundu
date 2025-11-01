@@ -33,6 +33,24 @@ export async function PUT(
         category: item?.category ?? '',
         pricing: item?.pricing ?? undefined,
       }));
+    } else if (sectionId === 'gallery' && Array.isArray(contentIn.images)) {
+      // Normalize gallery images for template consumption
+      contentIn.images = contentIn.images.map((img: any) => {
+        // If it's a GalleryImage object from admin, extract just what the template needs
+        if (img.media) {
+          return {
+            url: img.media.url || '',
+            alt: img.alt || '',
+            caption: img.caption || '',
+          };
+        }
+        // Otherwise keep as-is
+        return {
+          url: img.url || img,
+          alt: img.alt || '',
+          caption: img.caption || '',
+        };
+      });
     }
     const updated = await repo.upsertContent(id, sectionId as ContentSection, contentIn);
 

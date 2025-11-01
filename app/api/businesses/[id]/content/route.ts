@@ -112,11 +112,52 @@ export async function GET(
       const isHero = section === 'hero';
       const isServices = section === 'services';
       const rawContent = found?.content ?? defaults[section];
-      const contentOut = isHero
-        ? { ...(rawContent || {}), buttons: rawContent?.buttons ?? rawContent?.ctaButtons ?? [] }
-        : isServices
-        ? normalizeServices(rawContent)
-        : rawContent;
+      
+      let contentOut;
+      if (isHero) {
+        contentOut = { ...(rawContent || {}), buttons: rawContent?.buttons ?? rawContent?.ctaButtons ?? [] };
+      } else if (isServices) {
+        contentOut = normalizeServices(rawContent);
+      } else {
+        // Gallery needs special handling for admin editor compatibility
+        if (section === 'gallery') {
+          contentOut = {
+            ...rawContent,
+            layout: rawContent?.layout ?? 'grid',
+            columns: rawContent?.columns ?? 3,
+            images: Array.isArray(rawContent?.images)
+              ? rawContent.images.map((img: any) => {
+                  // Convert simple URL strings to MediaAsset format if needed
+                  if (typeof img === 'string') {
+                    return {
+                      id: `${Date.now()}-${Math.random()}`,
+                      media: {
+                        url: img,
+                        originalName: `Image ${Date.now()}`,
+                      },
+                      caption: '',
+                      alt: '',
+                      isVisible: true,
+                      order: 0,
+                    };
+                  }
+                  // If it's already a proper GalleryImage object, ensure it has all required fields
+                  return {
+                    id: img.id || `${Date.now()}-${Math.random()}`,
+                    media: img.media || { url: img.url || '', originalName: img.caption || 'Image' },
+                    caption: img.caption || '',
+                    alt: img.alt || '',
+                    isVisible: img.isVisible !== undefined ? img.isVisible : true,
+                    order: img.order || 0,
+                  };
+                })
+              : [],
+          };
+        } else {
+          contentOut = rawContent;
+        }
+      }
+      
       return {
         id: section,
         type: section,
@@ -187,6 +228,24 @@ export async function POST(
             category: item?.category ?? '',
             pricing: item?.pricing ?? undefined,
           }));
+        } else if (sectionKey === 'gallery' && Array.isArray(contentIn.images)) {
+          // Normalize gallery images for template consumption
+          contentIn.images = contentIn.images.map((img: any) => {
+            // If it's a GalleryImage object from admin, extract just what the template needs
+            if (img.media) {
+              return {
+                url: img.media.url || '',
+                alt: img.alt || '',
+                caption: img.caption || '',
+              };
+            }
+            // Otherwise keep as-is
+            return {
+              url: img.url || img,
+              alt: img.alt || '',
+              caption: img.caption || '',
+            };
+          });
         }
         return await repo.upsertContent(id, sectionKey, contentIn);
       })
