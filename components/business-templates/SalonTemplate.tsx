@@ -566,7 +566,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
       </section>
 
       {/* Gallery Section */}
-      <section className="px-4 py-24 bg-white" data-section>
+      {/* <section className="px-4 py-24 bg-white" data-section>
         <div className="mx-auto max-w-7xl">
           <div className="mb-16 text-center">
             <h2 className="mb-6 text-4xl font-bold text-black">
@@ -601,7 +601,44 @@ export function SalonTemplate({ business, content, template, preview = false }: 
             </div>
           )}
         </div>
-      </section>
+      </section> */}
+
+<section className="px-4 py-24 bg-white" data-section>
+  <div className="mx-auto max-w-7xl">
+    <div className="mb-16 text-center">
+      <h2 className="mb-6 text-4xl font-bold text-black">
+        {galleryContent?.title || 'Our Gallery'}
+      </h2>
+    </div>
+
+    {galleryContent?.images && galleryContent.images.length > 0 && (
+      <div className="grid gap-8 md:grid-cols-3">
+        {galleryContent.images.slice(0, 6).map((item: any, index: number) => (
+          <div
+            key={index}
+            className="overflow-hidden bg-white rounded-3xl shadow-lg transition-shadow duration-300 hover:shadow-xl"
+          >
+            <div className="relative aspect-[4/3]">
+              <img
+                src={item.url || item}
+                alt={item.alt || item.caption || `Gallery image ${index + 1}`}
+                className="object-contain w-full h-full bg-gray-50"
+              />
+            </div>
+
+            {item.caption && (
+              <div className="p-6">
+                <p className="text-sm text-gray-600 truncate">
+                  {item.caption}
+                </p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
 
       {/* Get Beauty Treatments Section */}
       <section

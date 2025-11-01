@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +31,6 @@ interface MediaPickerProps {
   selectedMedia?: MediaAsset[];
   title?: string;
   description?: string;
-  autoConfirmSingle?: boolean;
 }
 
 export function MediaPicker({
@@ -44,102 +43,83 @@ export function MediaPicker({
   maxSelection = 10,
   selectedMedia = [],
   title = 'Select Media',
-  description = 'Choose media from your library or upload new files',
-  autoConfirmSingle = false
+  description = 'Choose media from your library or upload new files'
 }: MediaPickerProps) {
   const [open, setOpen] = useState(false);
-  const [currentSelection, setCurrentSelection] = useState<MediaAsset[]>(selectedMedia);
-  const [lastSelected, setLastSelected] = useState<MediaAsset | null>(null);
+  const [selected, setSelected] = useState<MediaAsset[]>([]);
   const [activeTab, setActiveTab] = useState('library');
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
 
-  useEffect(() => {
-    // Only update if the selection actually changed by comparing IDs
-    const selectedIds = selectedMedia.map(item => item._id?.toString()).sort();
-    
-    setCurrentSelection(prev => {
-      const prevIds = prev.map(item => item._id?.toString()).sort();
-      // Only update if the IDs are different
-      if (JSON.stringify(prevIds) !== JSON.stringify(selectedIds)) {
-        return selectedMedia;
-      }
-      return prev;
-    });
-  }, [selectedMedia]);
-
-  const handleMediaSelection = (media: MediaAsset | MediaAsset[]) => {
-    const mediaArray = Array.isArray(media) ? media : [media];
-    
-    if (selectionMode === 'single') {
-      const selectedMedia = mediaArray[0];
-      setCurrentSelection([selectedMedia]);
-      setLastSelected(selectedMedia || null);
-      // Always auto-confirm for single selection to avoid confusion
-      if (selectedMedia) {
-        onSelect(selectedMedia);
-        setOpen(false);
-        return;
-      }
-    } else {
-      // For multiple selection, add/remove items
-      const newSelection = [...currentSelection];
-      
-      mediaArray.forEach(item => {
-        const existingIndex = newSelection.findIndex(selected => selected._id === item._id);
-        if (existingIndex >= 0) {
-          // Remove if already selected
-          newSelection.splice(existingIndex, 1);
-        } else if (newSelection.length < maxSelection) {
-          // Add if under limit
-          newSelection.push(item);
-        }
-      });
-      
-      setCurrentSelection(newSelection);
+  // Reset selection when dialog opens
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen) {
+      setSelected([...selectedMedia]);
     }
   };
 
-  const handleConfirmSelection = () => {
+  // Handle clicking on a media item
+  const handleMediaClick = (media: MediaAsset | MediaAsset[]) => {
+    const items = Array.isArray(media) ? media : [media];
+    const item = items[0];
+    if (!item) return;
+
     if (selectionMode === 'single') {
-      const media = currentSelection[0] || lastSelected || null;
-      if (!media) {
-        console.warn('No media selected for single selection');
-        return;
-      }
-      onSelect(media);
+      // Single mode: replace selection
+      setSelected([item]);
     } else {
-      // For multiple selection, ensure we have selected items
-      if (currentSelection.length === 0) {
-        console.warn('No items selected');
-        return;
-      }
-      onSelect(currentSelection);
+      // Multiple mode: toggle selection
+      setSelected(prev => {
+        const isSelected = prev.some(m => m._id?.toString() === item._id?.toString());
+        
+        if (isSelected) {
+          // Remove from selection
+          return prev.filter(m => m._id?.toString() !== item._id?.toString());
+        } else {
+          // Add to selection if under limit
+          if (prev.length < maxSelection) {
+            return [...prev, item];
+          }
+          return prev;
+        }
+      });
+    }
+  };
+
+  // Confirm and close
+  const handleConfirm = () => {
+    if (selected.length === 0) return;
+    
+    if (selectionMode === 'single') {
+      onSelect(selected[0]);
+    } else {
+      onSelect(selected);
     }
     setOpen(false);
   };
 
+  // Cancel and close
+  const handleCancel = () => {
+    setSelected([...selectedMedia]);
+    setOpen(false);
+  };
+
+  // Handle successful upload
   const handleUploadComplete = (media: MediaAsset) => {
-    // Auto-select uploaded media
+    // Add uploaded media to selection
     if (selectionMode === 'single') {
-      setCurrentSelection([media]);
-      setLastSelected(media || null);
-      if (autoConfirmSingle && media) {
-        onSelect(media);
-        setOpen(false);
-        return;
-      }
-    } else if (currentSelection.length < maxSelection) {
-      setCurrentSelection(prev => [...prev, media]);
+      setSelected([media]);
+    } else if (selected.length < maxSelection) {
+      setSelected(prev => [...prev, media]);
     }
-    
-    // Switch to library tab to show the new upload
+    // Switch to library tab
     setActiveTab('library');
   };
 
-  const removeFromSelection = (mediaId: string) => {
-    setCurrentSelection(prev => prev.filter(item => item._id?.toString() !== mediaId));
+  // Remove item from selection
+  const handleRemove = (mediaId: string) => {
+    setSelected(prev => prev.filter(m => m._id?.toString() !== mediaId));
   };
 
   const defaultTrigger = (
@@ -149,19 +129,8 @@ export function MediaPicker({
     </Button>
   );
 
-  const handleDialogClose = (openState: boolean) => {
-    if (!openState && !isCancelling && currentSelection.length > 0 && selectionMode === 'multiple') {
-      // Auto-confirm selection when closing dialog (for multiple mode) unless cancelled
-      onSelect(currentSelection);
-    }
-    if (openState) {
-      setIsCancelling(false);
-    }
-    setOpen(openState);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleDialogClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
@@ -177,41 +146,40 @@ export function MediaPicker({
 
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Selection Summary */}
-          {currentSelection.length > 0 && (
+          {selected.length > 0 && (
             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-blue-700">
-                  {currentSelection.length} item{currentSelection.length > 1 ? 's' : ''} selected
+                  {selected.length} {selectionMode === 'single' ? 'item' : `item${selected.length > 1 ? 's' : ''}`} selected
                   {selectionMode === 'multiple' && ` (max ${maxSelection})`}
                 </span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setCurrentSelection([])}
-                  className="text-blue-700 hover:text-blue-800"
+                  onClick={() => setSelected([])}
+                  className="text-blue-700 hover:text-blue-800 h-auto py-1"
                 >
-                  Clear all
+                  Clear
                 </Button>
               </div>
               
-              {currentSelection.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {currentSelection.map((item) => (
-                    <div
-                      key={item._id?.toString()}
-                      className="flex items-center gap-2 bg-white border rounded px-2 py-1 text-xs"
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selected.map((item) => (
+                  <div
+                    key={item._id?.toString()}
+                    className="flex items-center gap-2 bg-white border rounded px-2 py-1 text-xs"
+                  >
+                    <span className="truncate max-w-32">{item.originalName}</span>
+                    <button
+                      onClick={() => handleRemove(item._id?.toString() || '')}
+                      className="text-red-500 hover:text-red-700"
+                      type="button"
                     >
-                      <span className="truncate max-w-32">{item.originalName}</span>
-                      <button
-                        onClick={() => removeFromSelection(item._id?.toString() || '')}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -276,17 +244,58 @@ export function MediaPicker({
             )}
 
             <div className="flex-1 overflow-hidden">
-              <TabsContent value="library" className="h-full overflow-auto">
+              <TabsContent value="library" className="h-full overflow-auto m-0 p-4">
+                {/* Preview of selected items */}
+                {selected.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold mb-3">Selected Preview:</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                      {selected.map((item) => (
+                        <div key={item._id?.toString()} className="relative group">
+                          <div className="aspect-square rounded-lg overflow-hidden border-2 border-blue-500 bg-gray-100">
+                            {item.mimeType.startsWith('image/') ? (
+                              <img
+                                src={item.thumbnailUrl || item.url}
+                                alt={item.alt || item.originalName}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-purple-100">
+                                <svg className="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M2 6a2 2 0 012-2h6l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleRemove(item._id?.toString() || '')}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                            type="button"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                            <p className="text-white text-xs truncate">{item.originalName}</p>
+                          </div>
+                          <div className="absolute top-2 left-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-lg">
+                            <Check className="w-4 h-4" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <MediaLibrary
                   businessId={businessId}
-                  onMediaSelect={handleMediaSelection}
+                  onMediaSelect={handleMediaClick}
                   selectionMode={selectionMode}
                   filterCategory={category}
                   showUpload={false}
                 />
               </TabsContent>
 
-              <TabsContent value="upload" className="h-full overflow-auto">
+              <TabsContent value="upload" className="h-full overflow-auto m-0">
                 <MediaUpload
                   businessId={businessId}
                   onUploadComplete={handleUploadComplete}
@@ -307,11 +316,11 @@ export function MediaPicker({
           </Tabs>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between pt-4 border-t">
+          <div className="flex items-center justify-between pt-4 border-t mt-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Info className="w-4 h-4" />
               {selectionMode === 'single' 
-                ? 'Select one item to continue'
+                ? 'Select one item' 
                 : `Select up to ${maxSelection} items`
               }
             </div>
@@ -319,28 +328,18 @@ export function MediaPicker({
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => {
-                  setIsCancelling(true);
-                  setOpen(false);
-                }}
+                onClick={handleCancel}
+                type="button"
               >
                 Cancel
               </Button>
               <Button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleConfirmSelection();
-                }}
-                className="flex items-center gap-2"
-                disabled={selectionMode === 'multiple' && currentSelection.length === 0}
+                onClick={handleConfirm}
+                disabled={selected.length === 0}
+                type="button"
               >
-                <Check className="w-4 h-4" />
-                {selectionMode === 'single' 
-                  ? 'Select' 
-                  : currentSelection.length > 0 
-                    ? `Select ${currentSelection.length} item${currentSelection.length > 1 ? 's' : ''}` 
-                    : 'Select'}
+                <Check className="w-4 h-4 mr-2" />
+                Confirm Selection
               </Button>
             </div>
           </div>
@@ -350,7 +349,7 @@ export function MediaPicker({
   );
 }
 
-// Simplified MediaPreview component for showing selected media
+// MediaPreview component for showing selected media
 interface MediaPreviewProps {
   media: MediaAsset | null;
   onRemove?: () => void;
@@ -369,8 +368,7 @@ export function MediaPreview({
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 
-  // Reset states when media changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (media) {
       setImageLoading(true);
       setImageError(false);
@@ -392,6 +390,8 @@ export function MediaPreview({
       <div 
         className={`${className} border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-gray-400 transition-colors`}
         onClick={onSelect}
+        role="button"
+        tabIndex={0}
       >
         <div className="text-center">
           <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -403,7 +403,6 @@ export function MediaPreview({
   }
 
   const getImageSrc = () => {
-    // Use thumbnailUrl if available and not broken, otherwise fallback to main URL
     if (media.thumbnailUrl && !imageError) {
       return media.thumbnailUrl;
     }
@@ -414,14 +413,12 @@ export function MediaPreview({
     <div className={`${className} relative rounded-lg overflow-hidden border group bg-gray-50`}>
       {media.mimeType.startsWith('image/') ? (
         <>
-          {/* Loading skeleton */}
           {imageLoading && (
             <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
               <ImageIcon className="w-8 h-8 text-gray-400" />
             </div>
           )}
           
-          {/* Error state */}
           {imageError && (
             <div className="w-full h-full bg-gray-100 flex items-center justify-center">
               <div className="text-center">
@@ -432,7 +429,6 @@ export function MediaPreview({
             </div>
           )}
           
-          {/* Actual image */}
           {!imageError && (
             <img
               src={getImageSrc()}
@@ -458,7 +454,6 @@ export function MediaPreview({
         </div>
       )}
       
-      {/* Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
         <div className="opacity-0 group-hover:opacity-100 flex items-center gap-2">
           {onSelect && (
@@ -467,6 +462,7 @@ export function MediaPreview({
               size="sm"
               onClick={onSelect}
               className="bg-white text-black hover:bg-gray-100"
+              type="button"
             >
               <Eye className="w-4 h-4 mr-1" />
               Change
@@ -478,6 +474,7 @@ export function MediaPreview({
               size="sm"
               onClick={onRemove}
               className="bg-red-500 text-white hover:bg-red-600"
+              type="button"
             >
               <X className="w-4 h-4 mr-1" />
               Remove
@@ -486,7 +483,6 @@ export function MediaPreview({
         </div>
       </div>
 
-      {/* Media Info */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
         <p className="text-white text-sm font-medium truncate">{media.originalName}</p>
         <p className="text-gray-300 text-xs">
