@@ -25,17 +25,19 @@ import {
   User,
   Calendar,
   AlertCircle,
-  Loader2
+  Loader2,
+  DollarSign
 } from "lucide-react";
 import Link from "next/link";
 import { HeroEditor } from "@/components/admin/content-editors/HeroEditor";
 import { GalleryEditor } from "@/components/admin/content-editors/GalleryEditor";
+import { ExchangeRatesEditor } from "@/components/admin/content-editors/ExchangeRatesEditor";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 
 interface ContentSection {
   id: string;
-  type: 'hero' | 'about' | 'services' | 'gallery' | 'testimonials' | 'contact';
+  type: 'hero' | 'about' | 'services' | 'gallery' | 'testimonials' | 'contact' | 'exchangeRates';
   title: string;
   content: any;
   isActive: boolean;
@@ -153,7 +155,46 @@ export default function BusinessContentPage() {
       if (contentResponse.ok) {
         const contentResult = await contentResponse.json();
         if (contentResult.success && contentResult.data && contentResult.data.length > 0) {
-          setSections(contentResult.data);
+          let fetchedSections = contentResult.data;
+          
+          // If this is a foreign-exchange template, ensure exchangeRates section exists
+          if (businessData?.template === 'foreign-exchange') {
+            const exchangeRatesIndex = fetchedSections.findIndex((s: any) => s.type === 'exchangeRates' || s.id === 'exchangeRates');
+            if (exchangeRatesIndex === -1) {
+              // Add exchangeRates section if it doesn't exist
+              fetchedSections.push({
+                id: "exchangeRates",
+                type: "exchangeRates",
+                title: "Exchange Rates",
+                isActive: true,
+                content: {
+                  title: "Today's Rates",
+                  description: "Competitive foreign exchange rates available at all our bureau locations.",
+                  currencies: []
+                }
+              });
+            } else {
+              // Ensure the exchangeRates section has the correct structure
+              const exchangeRatesSection = fetchedSections[exchangeRatesIndex];
+              if (exchangeRatesSection) {
+                // Ensure content structure is correct
+                if (!exchangeRatesSection.content) {
+                  exchangeRatesSection.content = {};
+                }
+                if (!Array.isArray(exchangeRatesSection.content.currencies)) {
+                  exchangeRatesSection.content.currencies = [];
+                }
+                if (!exchangeRatesSection.content.title) {
+                  exchangeRatesSection.content.title = "Today's Rates";
+                }
+                if (!exchangeRatesSection.content.description) {
+                  exchangeRatesSection.content.description = "Competitive foreign exchange rates available at all our bureau locations.";
+                }
+              }
+            }
+          }
+          
+          setSections(fetchedSections);
           setIsLoading(false);
           return;
         }
@@ -286,6 +327,21 @@ export default function BusinessContentPage() {
         }
       }
     ];
+
+    // Add exchangeRates section for foreign-exchange template
+    if (businessData?.template === 'foreign-exchange') {
+      defaultSections.push({
+        id: "exchangeRates",
+        type: "exchangeRates",
+        title: "Exchange Rates",
+        isActive: true,
+        content: {
+          title: "Today's Rates",
+          description: "Competitive foreign exchange rates available at all our bureau locations.",
+          currencies: []
+        }
+      });
+    }
 
     setSections(defaultSections);
     setIsLoading(false);
@@ -674,6 +730,29 @@ export default function BusinessContentPage() {
     </div>
   );
 
+  const renderExchangeRatesEditor = (section: ContentSection) => {
+    // Ensure content has the correct structure
+    const content = {
+      title: section.content?.title || '',
+      description: section.content?.description || '',
+      currencies: Array.isArray(section.content?.currencies) ? section.content.currencies : []
+    };
+    
+    return (
+      <ExchangeRatesEditor
+        content={content}
+        onChange={(newContent) => {
+          setSections(prev => prev.map(s => 
+            s.id === section.id ? { ...s, content: newContent } : s
+          ));
+        }}
+        businessId={businessId}
+        onSave={() => saveSection(section.id, section.content)}
+        isSaving={isSaving}
+      />
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -757,7 +836,7 @@ export default function BusinessContentPage() {
 
       {/* Content Editor */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className={`grid w-full ${business?.template === 'foreign-exchange' ? 'grid-cols-7' : 'grid-cols-6'}`}>
           <TabsTrigger value="hero" className="flex items-center gap-2">
             <ImageIcon className="w-4 h-4" />
             Hero
@@ -770,6 +849,12 @@ export default function BusinessContentPage() {
             <Star className="w-4 h-4" />
             Services
           </TabsTrigger>
+          {business?.template === 'foreign-exchange' && (
+            <TabsTrigger value="exchangeRates" className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              Exchange Rates
+            </TabsTrigger>
+          )}
           <TabsTrigger value="gallery" className="flex items-center gap-2">
             <ImageIcon className="w-4 h-4" />
             Gallery
@@ -784,43 +869,59 @@ export default function BusinessContentPage() {
           </TabsTrigger>
         </TabsList>
 
-        {sections.map((section) => (
-          <TabsContent key={section.id} value={section.type}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      {section.title}
-                      <Badge variant={section.isActive ? "default" : "secondary"}>
-                        {section.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      Customize the {section.type} section content
-                    </CardDescription>
+        {sections.map((section) => {
+          // Only render TabsContent for sections that should be visible
+          if (section.type === "exchangeRates" && business?.template !== 'foreign-exchange') {
+            return null;
+          }
+          
+          return (
+            <TabsContent key={section.id} value={section.type}>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        {section.title}
+                        <Badge variant={section.isActive ? "default" : "secondary"}>
+                          {section.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>
+                        Customize the {section.type} section content
+                      </CardDescription>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {section.type === "hero" && renderHeroEditor(section)}
-                {section.type === "about" && renderAboutEditor(section)}
-                {section.type === "services" && renderServicesEditor(section)}
-                {section.type === "gallery" && renderGalleryEditor(section)}
-                {section.type === "contact" && renderContactEditor(section)}
-                {section.type === "testimonials" && (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Testimonials editor coming soon. 
-                      This section is currently managed automatically.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
+                </CardHeader>
+                <CardContent>
+                  {section.type === "hero" && renderHeroEditor(section)}
+                  {section.type === "about" && renderAboutEditor(section)}
+                  {section.type === "services" && renderServicesEditor(section)}
+                  {section.type === "exchangeRates" && renderExchangeRatesEditor(section)}
+                  {section.type === "gallery" && renderGalleryEditor(section)}
+                  {section.type === "contact" && renderContactEditor(section)}
+                  {section.type === "testimonials" && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Testimonials editor coming soon. 
+                        This section is currently managed automatically.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {!["hero", "about", "services", "exchangeRates", "gallery", "contact", "testimonials"].includes(section.type) && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        No editor available for section type: {section.type}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          );
+        })}
       </Tabs>
     </div>
   );

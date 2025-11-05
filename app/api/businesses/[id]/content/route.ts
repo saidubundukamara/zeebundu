@@ -33,7 +33,7 @@ export async function GET(
       'features',
     ];
 
-    const defaults: Record<ContentSection, any> = {
+    const defaults: Record<ContentSection | 'exchangeRates', any> = {
       hero: {
         title: '',
         subtitle: '',
@@ -87,6 +87,11 @@ export async function GET(
         description: '',
         features: [],
       },
+      exchangeRates: {
+        title: '',
+        description: '',
+        currencies: [],
+      },
     } as any;
 
     const normalizeServices = (content: any) => ({
@@ -111,7 +116,7 @@ export async function GET(
       const found = latestBySection.get(section);
       const isHero = section === 'hero';
       const isServices = section === 'services';
-      const rawContent = found?.content ?? defaults[section];
+      const rawContent = found?.content ?? defaults[section as keyof typeof defaults];
       
       let contentOut;
       if (isHero) {
@@ -167,9 +172,25 @@ export async function GET(
       };
     });
 
+    // Also include any custom sections like exchangeRates that aren't in the standard sectionOrder
+    const customSections = Array.from(latestBySection.keys()).filter(
+      (section) => !sectionOrder.includes(section as ContentSection)
+    );
+    
+    const customData = customSections.map((section) => {
+      const found = latestBySection.get(section);
+      return {
+        id: section,
+        type: section,
+        title: typeof found?.content?.title === 'string' ? found.content.title : section,
+        isActive: found?.isActive ?? true,
+        content: found?.content ?? {},
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      data,
+      data: [...data, ...customData],
       message: 'Content retrieved successfully'
     });
   } catch (error) {
@@ -246,8 +267,18 @@ export async function POST(
               caption: img.caption || '',
             };
           });
+        } else if (sectionKey === 'exchangeRates' && Array.isArray(contentIn.currencies)) {
+          // Normalize exchange rates currencies for Foreign Exchange template
+          contentIn.currencies = contentIn.currencies.map((currency: any) => ({
+            currency: currency?.currency || currency?.name || '',
+            code: currency?.code || '',
+            flag: currency?.flag || '',
+            buyRate: currency?.buyRate || currency?.buy || '',
+            sellRate: currency?.sellRate || currency?.sell || '',
+            change: currency?.change || '',
+          }));
         }
-        return await repo.upsertContent(id, sectionKey, contentIn);
+        return await repo.upsertContent(id, sectionKey as any, contentIn);
       })
     );
 

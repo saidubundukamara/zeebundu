@@ -218,9 +218,9 @@ export function HeroEditor({
                     {content.description || 'Your hero description goes here'}
                   </p>
                   <div className="flex gap-4 justify-center">
-                    {content.buttons.filter(btn => btn.isVisible).map((button) => (
+                    {content.buttons.filter(btn => btn.isVisible).map((button, index) => (
                       <button
-                        key={button.id}
+                        key={button.id || `btn-preview-${index}`}
                         className={`px-6 py-3 rounded-lg font-medium ${
                           button.style === 'primary' ? 'bg-blue-600 text-white' :
                           button.style === 'secondary' ? 'bg-white text-gray-900' :
@@ -310,8 +310,11 @@ export function HeroEditor({
               </div>
 
               <div className="space-y-3">
-                {content.buttons.map((button) => (
-                  <div key={button.id} className="p-4 border rounded-lg space-y-3">
+                {content.buttons.map((button, index) => {
+                  // Ensure button has an ID for React key - use index as fallback
+                  const buttonId = button.id || `btn-temp-${index}`;
+                  return (
+                  <div key={buttonId} className="p-4 border rounded-lg space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">Button</span>
@@ -365,7 +368,8 @@ export function HeroEditor({
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </CardContent>
