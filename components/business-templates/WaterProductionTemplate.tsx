@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Droplets,
   Truck,
@@ -12,6 +12,7 @@ import {
   Clock,
   Star,
   Zap,
+  LucideIcon,
 } from "lucide-react";
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
@@ -23,6 +24,20 @@ interface WaterProductionPageProps {
   template: BusinessTemplate;
   preview?: boolean;
 }
+
+// Icon mapping for dynamic icons
+const iconMap: Record<string, LucideIcon> = {
+  Droplets,
+  Truck,
+  Shield,
+  Users,
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  Star,
+  Zap,
+};
 
 export function WaterProductionTemplate({ business, content, template, preview = false }: WaterProductionPageProps) {
   const [visibleSections, setVisibleSections] = useState(new Set());
@@ -46,94 +61,130 @@ export function WaterProductionTemplate({ business, content, template, preview =
     return () => observer.disconnect();
   }, []);
 
-  const products = [
-    {
-      category: "Bottled Water",
-      image:
-        "https://www.coldist.com/wp-content/uploads/2021/11/Bottled-water.jpg",
-      description: "Pure, refreshing bottled water in various sizes",
-      sizes: ["500ml Bottles", "1L Bottles", "1.5L Bottles", "5L Containers"],
-      icon: Droplets,
-    },
-    {
-      category: "Bulk Water Supply",
-      image:
-        "https://media.istockphoto.com/id/1096008526/photo/many-packaged-blue-mineral-water-bottles.jpg?s=612x612&w=0&k=20&c=6jK0yoRyuUFVhwYSnMC48YNYfqPAP_uAaP436rcKSR0=",
-      description: "Large volume water supply for businesses and events",
-      sizes: [
-        "20L Dispensers",
-        "200L Drums",
-        "Tanker Delivery",
-        "Custom Volumes",
-      ],
-      icon: Truck,
-    },
-    {
-      category: "Purified Water",
-      image:
-        "https://alexasprings.com/wp-content/uploads/2016/11/purified-vs-spring.jpg",
-      description: "Advanced purification for premium quality water",
-      sizes: [
-        "Reverse Osmosis",
-        "UV Treated",
-        "Mineral Enhanced",
-        "Alkaline Water",
-      ],
-      icon: Shield,
-    },
-    {
-      category: "Custom Solutions",
-      image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6yCRWmrVh2WTRFWolhWRGIqPwt555VYxvtw&s",
-      description: "Tailored water solutions for specific industry needs",
-      sizes: [
-        "Private Labeling",
-        "Custom Packaging",
-        "Special Formulations",
-        "Delivery Plans",
-      ],
-      icon: Users,
-    },
-  ];
+  // Extract content sections from database - NO FALLBACKS
+  const heroContent = content?.hero || (content?.sections && content.sections.find((s: any) => s.type === 'hero')?.content);
+  const productsContent = content?.products || (content?.sections && content.sections.find((s: any) => s.type === 'products')?.content);
+  const servicesContent = content?.services || (content?.sections && content.sections.find((s: any) => s.type === 'services')?.content);
+  const processContent = content?.process || (content?.sections && content.sections.find((s: any) => s.type === 'process')?.content);
+  const contactContent = content?.contact || (content?.sections && content.sections.find((s: any) => s.type === 'contact')?.content);
 
-  const services = [
-    {
-      icon: Truck,
-      name: "Delivery Service",
-      description: "Reliable water delivery to homes, offices, and businesses",
-    },
-    {
-      icon: Shield,
-      name: "Quality Testing",
-      description:
-        "Regular quality control and purity testing for all products",
-    },
-    {
-      icon: Users,
-      name: "Bulk Orders",
-      description: "Special pricing and scheduling for large volume orders",
-    },
-    {
-      icon: Clock,
-      name: "Subscription Service",
-      description: "Regular delivery subscriptions for consistent water supply",
-    },
-  ];
+  // Extract hero data - NO FALLBACKS
+  const hasHeroContent = heroContent?.title || heroContent?.description;
+  const heroTitle = heroContent?.title;
+  const heroSubtitle = heroContent?.subtitle;
+  const heroDescription = heroContent?.description;
+  const heroBadge = heroContent?.badge || heroContent?.badges?.[0];
+  const heroBackgroundImage = heroContent?.backgroundImage?.url || heroContent?.backgroundImage;
+  const heroButtons = heroContent?.ctaButtons || heroContent?.buttons || [];
+  const heroStats = useMemo(() => {
+    if (heroContent?.stats && Array.isArray(heroContent.stats) && heroContent.stats.length > 0) {
+      return heroContent.stats.map((s: any) => ({
+        number: s.number || s.value || '',
+        label: s.label || s.title || '',
+      }));
+    }
+    return [];
+  }, [heroContent]);
 
-  const stats = [
-    { number: "1M+", label: "Liters Produced Daily" },
-    { number: "500+", label: "Regular Customers" },
-    { number: "99.9%", label: "Purity Level" },
-    { number: "24/7", label: "Production Hours" },
-  ];
+  // Extract products - NO FALLBACKS
+  const products = useMemo(() => {
+    if (productsContent?.products && Array.isArray(productsContent.products) && productsContent.products.length > 0) {
+      return productsContent.products.map((p: any) => {
+        const iconName = p.icon || p.iconName || 'Droplets';
+        const IconComponent = typeof iconName === 'string' 
+          ? (iconMap[iconName] || Droplets)
+          : (iconName || Droplets);
+        return {
+          category: p.category || p.name || '',
+          image: p.image?.url || p.image || '',
+          description: p.description || '',
+          sizes: Array.isArray(p.sizes) ? p.sizes : [],
+          icon: IconComponent,
+        };
+      });
+    }
+    return [];
+  }, [productsContent]);
+
+  const hasProducts = products.length > 0;
+  const productsTitle = productsContent?.title;
+  const productsDescription = productsContent?.description;
+  const productsSubtitle = productsContent?.subtitle;
+
+  // Extract services - NO FALLBACKS
+  const services = useMemo(() => {
+    if (servicesContent?.services && Array.isArray(servicesContent.services) && servicesContent.services.length > 0) {
+      return servicesContent.services.map((s: any) => {
+        const iconName = s.icon || s.iconName || 'Truck';
+        const IconComponent = typeof iconName === 'string' 
+          ? (iconMap[iconName] || Truck)
+          : (iconName || Truck);
+        return {
+          icon: IconComponent,
+          name: s.name || s.title || '',
+          description: s.description || '',
+        };
+      });
+    }
+    return [];
+  }, [servicesContent]);
+
+  const hasServices = services.length > 0;
+  const servicesTitle = servicesContent?.title;
+  const servicesDescription = servicesContent?.description;
+
+  // Extract process steps - NO FALLBACKS
+  const processSteps = useMemo(() => {
+    if (processContent?.steps && Array.isArray(processContent.steps) && processContent.steps.length > 0) {
+      return processContent.steps.map((step: any) => {
+        const iconName = step.icon || step.iconName || 'Droplets';
+        const IconComponent = typeof iconName === 'string' 
+          ? (iconMap[iconName] || Droplets)
+          : (iconName || Droplets);
+        return {
+          number: step.number || step.stepNumber || '',
+          title: step.title || '',
+          description: step.description || '',
+          subtitle: step.subtitle || '',
+          icon: IconComponent,
+        };
+      });
+    }
+    return [];
+  }, [processContent]);
+
+  const hasProcess = processSteps.length > 0;
+  const processTitle = processContent?.title;
+  const processDescription = processContent?.description;
+
+  // Extract contact data - NO FALLBACKS
+  const hasContactContent = contactContent?.phone || contactContent?.email || business?.contact?.phone || business?.contact?.email;
+  const contactPhone = contactContent?.phone || business?.contact?.phone;
+  const contactEmail = contactContent?.email || business?.contact?.email;
+  const contactTitle = contactContent?.title;
+  const contactDescription = contactContent?.description;
 
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
 
-      {/* Hero Section - Water Production Company */}
+      {/* Hero Section - Only render if data exists */}
+      {hasHeroContent && (
       <section className="overflow-hidden relative min-h-screen bg-gradient-to-br via-blue-900 to-cyan-900 from-slate-900">
-        {/* Industrial Background Elements */}
+        {/* Background Image if provided */}
+        {heroBackgroundImage && (
+        <div className="absolute inset-0">
+          <img
+            src={heroBackgroundImage}
+            alt="Water Production Facility"
+            className="object-cover w-full h-full"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br via-blue-900/80 to-cyan-900/80 from-slate-900/80"></div>
+        </div>
+        )}
+
+        {/* Industrial Background Elements (if no background image) */}
+        {!heroBackgroundImage && (
         <div className="absolute inset-0">
           {/* Water Production Facility Silhouette */}
           <div className="absolute bottom-0 left-0 w-full h-1/3 opacity-20">
@@ -150,44 +201,13 @@ export function WaterProductionTemplate({ business, content, template, preview =
                   <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.1" />
                 </linearGradient>
               </defs>
-              {/* Factory buildings and tanks */}
-              <rect
-                x="50"
-                y="200"
-                width="80"
-                height="200"
-                fill="url(#facilityGradient)"
-              />
-              <rect
-                x="150"
-                y="150"
-                width="100"
-                height="250"
-                fill="url(#facilityGradient)"
-              />
+              <rect x="50" y="200" width="80" height="200" fill="url(#facilityGradient)" />
+              <rect x="150" y="150" width="100" height="250" fill="url(#facilityGradient)" />
               <circle cx="300" cy="250" r="60" fill="url(#facilityGradient)" />
-              <rect
-                x="400"
-                y="180"
-                width="120"
-                height="220"
-                fill="url(#facilityGradient)"
-              />
+              <rect x="400" y="180" width="120" height="220" fill="url(#facilityGradient)" />
               <circle cx="600" cy="220" r="80" fill="url(#facilityGradient)" />
-              <rect
-                x="750"
-                y="160"
-                width="90"
-                height="240"
-                fill="url(#facilityGradient)"
-              />
-              <rect
-                x="900"
-                y="190"
-                width="110"
-                height="210"
-                fill="url(#facilityGradient)"
-              />
+              <rect x="750" y="160" width="90" height="240" fill="url(#facilityGradient)" />
+              <rect x="900" y="190" width="110" height="210" fill="url(#facilityGradient)" />
               <circle cx="1100" cy="280" r="70" fill="url(#facilityGradient)" />
             </svg>
           </div>
@@ -196,79 +216,43 @@ export function WaterProductionTemplate({ business, content, template, preview =
           <div className="absolute inset-0">
             <svg className="w-full h-full" viewBox="0 0 1200 800">
               <defs>
-                <linearGradient
-                  id="flowGradient"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
+                <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0" />
                   <stop offset="50%" stopColor="#06b6d4" stopOpacity="0.6" />
                   <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              <path
-                d="M0,300 Q300,250 600,300 T1200,300"
-                stroke="url(#flowGradient)"
-                strokeWidth="3"
-                fill="none"
-                className="animate-pulse"
-              />
-              <path
-                d="M0,400 Q400,350 800,400 T1200,400"
-                stroke="url(#flowGradient)"
-                strokeWidth="2"
-                fill="none"
-                className="animate-pulse"
-                style={{ animationDelay: "1s" }}
-              />
-              <path
-                d="M0,500 Q200,450 400,500 T800,500"
-                stroke="url(#flowGradient)"
-                strokeWidth="2"
-                fill="none"
-                className="animate-pulse"
-                style={{ animationDelay: "2s" }}
-              />
+              <path d="M0,300 Q300,250 600,300 T1200,300" stroke="url(#flowGradient)" strokeWidth="3" fill="none" className="animate-pulse" />
+              <path d="M0,400 Q400,350 800,400 T1200,400" stroke="url(#flowGradient)" strokeWidth="2" fill="none" className="animate-pulse" style={{ animationDelay: "1s" }} />
+              <path d="M0,500 Q200,450 400,500 T800,500" stroke="url(#flowGradient)" strokeWidth="2" fill="none" className="animate-pulse" style={{ animationDelay: "2s" }} />
             </svg>
-          </div>
-
-          {/* Floating Quality Indicators */}
-          <div className="absolute inset-0">
-            <div className="absolute top-20 right-20 p-4 rounded-xl border backdrop-blur-sm bg-blue-500/10 border-blue-400/20 animate-float">
-              <div className="font-mono text-sm text-blue-300">pH: 7.2</div>
-            </div>
-            <div
-              className="absolute left-20 top-40 p-4 rounded-xl border backdrop-blur-sm bg-cyan-500/10 border-cyan-400/20 animate-float"
-              style={{ animationDelay: "1s" }}
-            >
-              <div className="font-mono text-sm text-cyan-300">TDS: 45ppm</div>
-            </div>
-            <div
-              className="absolute bottom-40 right-1/4 p-4 rounded-xl border backdrop-blur-sm bg-teal-500/10 border-teal-400/20 animate-float"
-              style={{ animationDelay: "2s" }}
-            >
-              <div className="font-mono text-sm text-teal-300">Temp: 4°C</div>
-            </div>
           </div>
 
           {/* Particle System - Water Molecules */}
           <div className="absolute inset-0">
-            {Array.from({ length: 20 }).map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-2 h-2 rounded-full animate-pulse bg-blue-300/30"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 3}s`,
-                  animationDuration: `${2 + Math.random() * 2}s`,
-                }}
-              />
-            ))}
+            {Array.from({ length: 20 }).map((_, i) => {
+              // Deterministic pseudo-random values based on index to avoid hydration mismatch
+              const seed = i * 0.618033988749895; // Golden ratio for better distribution
+              const left = ((seed * 100) % 100).toFixed(2);
+              const top = (((seed * 137.508) % 100)).toFixed(2); // Golden angle
+              const delay = ((seed * 3) % 3).toFixed(2);
+              const duration = (2 + (seed * 2) % 2).toFixed(2);
+              return (
+                <div
+                  key={i}
+                  className="absolute w-2 h-2 rounded-full animate-pulse bg-blue-300/30"
+                  style={{
+                    left: `${left}%`,
+                    top: `${top}%`,
+                    animationDelay: `${delay}s`,
+                    animationDuration: `${duration}s`,
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
+        )}
 
         {/* Main Content */}
         <div className="flex relative z-10 items-center px-4 min-h-screen">
@@ -277,99 +261,84 @@ export function WaterProductionTemplate({ business, content, template, preview =
               {/* Left Side - Content */}
               <div className="space-y-8">
                 {/* Company Badge */}
+                {heroBadge && (
                 <div className="animate-fade-in-up">
                   <span className="inline-flex items-center px-6 py-3 text-sm font-semibold text-blue-200 rounded-full border backdrop-blur-sm bg-blue-500/20 border-blue-400/30">
                     <Droplets className="mr-3 w-4 h-4 text-blue-400" />
-                    Premium Water Production Facility
+                    {heroBadge}
                   </span>
                 </div>
+                )}
 
                 {/* Main Heading */}
-                <div
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: "0.2s" }}
-                >
+                {heroTitle && (
+                <div className="animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
                   <h1 className="text-5xl font-black leading-tight text-white md:text-6xl lg:text-7xl">
+                    {heroSubtitle ? (
+                      <>
                     <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-300">
-                      CRYSTAL
+                          {heroTitle}
                     </span>
                     <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-teal-300">
-                      PURE
+                          {heroSubtitle}
                     </span>
-                    <span className="block mt-2 text-4xl font-light text-white md:text-5xl lg:text-6xl">
-                      Water Production
-                    </span>
+                      </>
+                    ) : (
+                      <span className="block text-white">{heroTitle}</span>
+                    )}
                   </h1>
                 </div>
+                )}
 
                 {/* Description */}
-                <div
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: "0.4s" }}
-                >
+                {heroDescription && (
+                <div className="animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
                   <p className="max-w-2xl text-xl font-light leading-relaxed text-blue-100 md:text-2xl">
-                    State-of-the-art water purification and bottling facility
-                    delivering
-                    <span className="font-medium text-cyan-300">
-                      {" "}
-                      premium quality water
-                    </span>{" "}
-                    through advanced filtration technology and rigorous quality
-                    control.
+                    {heroDescription}
                   </p>
                 </div>
+                )}
 
                 {/* Production Stats */}
-                <div
-                  className="grid grid-cols-3 gap-6 animate-fade-in-up"
-                  style={{ animationDelay: "0.6s" }}
-                >
-                  <div className="text-center">
+                {heroStats.length > 0 && (
+                <div className="grid grid-cols-3 gap-6 animate-fade-in-up" style={{ animationDelay: "0.6s" }}>
+                  {heroStats.map((stat: any, index: number) => (
+                    <div key={index} className="text-center">
                     <div className="text-3xl font-black text-blue-300 md:text-4xl">
-                      50K+
+                        {stat.number}
                     </div>
                     <div className="text-sm font-medium text-blue-200/80">
-                      Liters/Day
+                        {stat.label}
                     </div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-black text-cyan-300 md:text-4xl">
-                      99.9%
+                  ))}
                     </div>
-                    <div className="text-sm font-medium text-cyan-200/80">
-                      Purity Level
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-black text-teal-300 md:text-4xl">
-                      24/7
-                    </div>
-                    <div className="text-sm font-medium text-teal-200/80">
-                      Production
-                    </div>
-                  </div>
-                </div>
+                )}
 
                 {/* CTA Buttons */}
-                <div
-                  className="flex flex-col gap-4 sm:flex-row animate-fade-in-up"
-                  style={{ animationDelay: "0.8s" }}
-                >
-                  <button className="overflow-hidden relative px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl shadow-2xl transition-all duration-300 group hover:scale-105 hover:shadow-blue-500/50">
+                {heroButtons.length > 0 && (
+                <div className="flex flex-col gap-4 sm:flex-row animate-fade-in-up" style={{ animationDelay: "0.8s" }}>
+                  {heroButtons.map((button: any, index: number) => (
+                    <a
+                      key={index}
+                      href={button.link || button.href || '#'}
+                      className={`overflow-hidden relative px-8 py-4 text-lg font-bold text-white rounded-xl shadow-2xl transition-all duration-300 group hover:scale-105 ${
+                        button.style === 'secondary' || index > 0
+                          ? 'border-2 backdrop-blur-sm bg-white/10 border-white/30 hover:bg-white/20 hover:border-white/50'
+                          : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:shadow-blue-500/50'
+                      }`}
+                    >
+                      {button.style !== 'secondary' && index === 0 && (
                     <span className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
+                      )}
                     <span className="flex relative items-center">
-                      <Truck className="mr-3 w-5 h-5" />
-                      Order Water Supply
+                        {button.icon && <button.icon className="mr-3 w-5 h-5" />}
+                        {button.text || button.label || 'Learn More'}
                     </span>
-                  </button>
-
-                  <button className="px-8 py-4 text-lg font-semibold text-white rounded-xl border-2 backdrop-blur-sm transition-all duration-300 group bg-white/10 border-white/30 hover:bg-white/20 hover:border-white/50">
-                    <span className="flex items-center">
-                      <Shield className="mr-3 w-5 h-5" />
-                      Quality Certification
-                    </span>
-                  </button>
+                    </a>
+                  ))}
                 </div>
+                )}
               </div>
 
               {/* Right Side - Production Visualization */}
@@ -440,8 +409,10 @@ export function WaterProductionTemplate({ business, content, template, preview =
           </div>
         </div>
       </section>
+      )}
 
-      {/* Products Section */}
+      {/* Products Section - Only render if data exists */}
+      {hasProducts && (
       <section
         data-section
         id="products"
@@ -492,38 +463,35 @@ export function WaterProductionTemplate({ business, content, template, preview =
         <div className="relative z-10 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="mb-16 text-center">
+            {productsSubtitle && (
             <div className="mb-6">
               <span className="inline-flex items-center px-6 py-3 text-sm font-semibold text-blue-600 bg-blue-50 rounded-full border border-blue-200">
                 <Droplets className="mr-3 w-4 h-4 text-blue-500" />
-                Production Line Portfolio
+                {productsSubtitle}
               </span>
             </div>
+            )}
+            {productsTitle && (
             <h2 className="mb-6 text-5xl font-black leading-tight text-gray-900 md:text-6xl">
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">
-                PREMIUM
-              </span>
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-blue-900">
-                WATER SOLUTIONS
-              </span>
+              {productsTitle}
             </h2>
+            )}
+            {productsDescription && (
             <p className="mx-auto max-w-4xl text-xl font-light leading-relaxed text-gray-600 md:text-2xl">
-              Advanced purification technology meets diverse market demands
-              through our
-              <span className="font-medium text-blue-600">
-                {" "}
-                comprehensive product range
-              </span>
+              {productsDescription}
             </p>
+            )}
           </div>
 
           {/* Products Grid */}
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            {products.map((product, index) => (
+            {products.map((product: any, index: number) => (
               <div
                 key={index}
                 className="overflow-hidden relative bg-white rounded-3xl border border-gray-200 transition-all duration-500 group hover:border-blue-300 hover:shadow-xl hover:shadow-blue-100/50 hover:scale-105"
               >
                 {/* Product Header with Real Images */}
+                {product.image && (
                 <div className="overflow-hidden relative h-64">
                   {/* Product Image */}
                   <img
@@ -550,27 +518,25 @@ export function WaterProductionTemplate({ business, content, template, preview =
                     </div>
                   </div>
 
-                  {/* Production Badge */}
-                  <div className="absolute top-6 right-6">
-                    <span className="px-4 py-2 text-sm font-semibold text-green-700 bg-green-50 rounded-full border border-green-200">
-                      In Production
-                    </span>
                   </div>
-                </div>
+                )}
 
                 {/* Product Details */}
                 <div className="p-8">
+                  {product.description && (
                   <p className="mb-6 text-lg leading-relaxed text-gray-600">
                     {product.description}
                   </p>
+                  )}
 
                   {/* Available Sizes with Clean Design */}
+                  {product.sizes.length > 0 && (
                   <div className="mb-6">
                     <h4 className="mb-3 text-sm font-semibold tracking-wider text-blue-600 uppercase">
                       Available Formats
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
-                      {product.sizes.map((size, idx) => (
+                      {product.sizes.map((size: string, idx: number) => (
                         <div
                           key={idx}
                           className="relative px-4 py-3 text-center bg-blue-50 rounded-xl border border-blue-200 transition-all duration-300 group/size hover:bg-blue-100 hover:border-blue-300"
@@ -583,6 +549,7 @@ export function WaterProductionTemplate({ business, content, template, preview =
                       ))}
                     </div>
                   </div>
+                  )}
 
                   {/* Production Specs */}
                   <div className="flex justify-between items-center pt-4 border-t border-gray-200">
@@ -622,26 +589,12 @@ export function WaterProductionTemplate({ business, content, template, preview =
             ))}
           </div>
 
-          {/* Bottom CTA Section */}
-          <div className="mt-16 text-center">
-            <div className="inline-flex items-center px-8 py-4 space-x-4 bg-blue-50 rounded-2xl border border-blue-200">
-              <div className="text-blue-700">
-                <span className="text-sm font-medium">
-                  Need custom solutions?
-                </span>
-              </div>
-              <a
-                href="#contact"
-                className="inline-block px-6 py-2 font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl transition-all duration-300 hover:scale-105"
-              >
-                Contact Production Team
-              </a>
-            </div>
-          </div>
         </div>
       </section>
+      )}
 
-      {/* Services Section */}
+      {/* Services Section - Only render if data exists */}
+      {hasServices && (
       <section
         data-section
         id="services"
@@ -649,18 +602,26 @@ export function WaterProductionTemplate({ business, content, template, preview =
       >
         {/* Animated Water Bubbles Background */}
         <div className="absolute inset-0 pointer-events-none">
-          {[...Array(12)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-4 h-4 rounded-full animate-pulse bg-blue-200/30"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${3 + Math.random() * 2}s`,
-              }}
-            />
-          ))}
+          {[...Array(12)].map((_, i) => {
+            // Deterministic pseudo-random values based on index to avoid hydration mismatch
+            const seed = i * 0.618033988749895; // Golden ratio for better distribution
+            const left = ((seed * 100) % 100).toFixed(2);
+            const top = (((seed * 137.508) % 100)).toFixed(2); // Golden angle
+            const delay = ((seed * 3) % 3).toFixed(2);
+            const duration = (3 + (seed * 2) % 2).toFixed(2);
+            return (
+              <div
+                key={i}
+                className="absolute w-4 h-4 rounded-full animate-pulse bg-blue-200/30"
+                style={{
+                  left: `${left}%`,
+                  top: `${top}%`,
+                  animationDelay: `${delay}s`,
+                  animationDuration: `${duration}s`,
+                }}
+              />
+            );
+          })}
         </div>
 
         {/* Flowing Water Lines */}
@@ -701,6 +662,7 @@ export function WaterProductionTemplate({ business, content, template, preview =
 
         <div className="relative z-10 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="mb-16 text-center">
+            {servicesTitle && (
             <div className="inline-flex gap-3 items-center mb-4">
               <div className="flex justify-center items-center w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full">
                 <svg
@@ -712,24 +674,19 @@ export function WaterProductionTemplate({ business, content, template, preview =
                 </svg>
               </div>
               <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600">
-                Premium Services
+                {servicesTitle}
               </h2>
             </div>
+            )}
+            {servicesDescription && (
             <p className="mx-auto max-w-3xl text-xl leading-relaxed text-gray-700">
-              Experience excellence in water production with our comprehensive
-              suite of
-              <span className="font-semibold text-blue-600">
-                industrial-grade services
-              </span>{" "}
-              and
-              <span className="font-semibold text-cyan-600">
-                quality assurance
-              </span>
+              {servicesDescription}
             </p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {services.map((service, index) => (
+            {services.map((service: any, index: number) => (
               <div
                 key={index}
                 className="relative p-8 text-center rounded-2xl border border-blue-100 backdrop-blur-sm transition-all duration-500 group bg-white/80 hover:bg-white hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-2 hover:border-blue-300"
@@ -774,31 +731,12 @@ export function WaterProductionTemplate({ business, content, template, preview =
             ))}
           </div>
 
-          {/* Call to Action */}
-          <div className="mt-16 text-center">
-            <a
-              href="#contact"
-              className="inline-flex gap-3 items-center px-8 py-4 font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105 group"
-            >
-              <span>Get Premium Service</span>
-              <svg
-                className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 7l5 5m0 0l-5 5m5-5H6"
-                />
-              </svg>
-            </a>
-          </div>
         </div>
       </section>
+      )}
 
+      {/* Process Section - Only render if data exists */}
+      {hasProcess && (
       <section
         data-section
         id="process"
@@ -822,6 +760,7 @@ export function WaterProductionTemplate({ business, content, template, preview =
 
         <div className="relative z-10 px-4 mx-auto max-w-6xl sm:px-6 lg:px-8">
           <div className="mb-16 text-center">
+            {processTitle && (
             <div className="inline-flex gap-4 items-center mb-6">
               <div className="flex justify-center items-center w-14 h-14 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full shadow-xl">
                 <svg
@@ -839,180 +778,70 @@ export function WaterProductionTemplate({ business, content, template, preview =
                 </svg>
               </div>
               <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600">
-                Production Steps
+                {processTitle}
               </h2>
             </div>
+            )}
+            {processDescription && (
             <p className="mx-auto max-w-3xl text-lg leading-relaxed text-gray-700">
-              Follow our{" "}
-              <span className="font-semibold text-blue-600">
-                step-by-step process
-              </span>{" "}
-              as each stage descends through our{" "}
-              <span className="font-semibold text-cyan-600">
-                precision production line
-              </span>
+              {processDescription}
             </p>
+            )}
           </div>
 
           {/* Descending Steps Container */}
           <div className="relative mx-auto max-w-4xl">
-            {/* Step 1: Source Water */}
-            <div
-              className="relative mb-8"
-              style={{ animation: "stepDown 0.8s ease-out 0.2s both" }}
-            >
-              <div className="overflow-hidden relative rounded-2xl border-2 border-blue-200 shadow-xl backdrop-blur-sm transition-all duration-500 bg-white/95 hover:shadow-2xl hover:shadow-blue-500/25 group">
+            {processSteps.map((step: any, index: number) => {
+              const marginLeft = index * 16; // 0, 16, 32, 48...
+              const isEven = index % 2 === 0;
+              const colors = isEven 
+                ? { from: 'from-blue-500', to: 'to-cyan-500', border: 'border-blue-200', text: 'text-blue-600', hover: 'hover:shadow-blue-500/25' }
+                : { from: 'from-cyan-500', to: 'to-blue-500', border: 'border-cyan-200', text: 'text-cyan-600', hover: 'hover:shadow-cyan-500/25' };
+              
+              return (
+                <div
+                  key={index}
+                  className={`relative mb-8 ${index > 0 ? `ml-${marginLeft}` : ''}`}
+                  style={{ animation: `stepDown 0.8s ease-out ${0.2 + index * 0.2}s both` }}
+                >
+                  <div className={`overflow-hidden relative rounded-2xl border-2 ${colors.border} shadow-xl backdrop-blur-sm transition-all duration-500 bg-white/95 hover:shadow-2xl ${colors.hover} group`}>
                 {/* Step Number Badge */}
-                <div className="flex absolute -top-4 -left-4 z-10 justify-center items-center w-12 h-12 text-lg font-bold text-white bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full shadow-lg">
-                  01
+                    <div className={`flex absolute -top-4 -left-4 z-10 justify-center items-center w-12 h-12 text-lg font-bold text-white bg-gradient-to-br ${colors.from} ${colors.to} rounded-full shadow-lg`}>
+                      {String(step.number || index + 1).padStart(2, '0')}
                 </div>
 
                 {/* Water Flow Line */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500 transition-transform duration-1000 transform origin-left scale-x-0 group-hover:scale-x-100" />
+                    <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${colors.from} ${colors.to} transition-transform duration-1000 transform origin-left scale-x-0 group-hover:scale-x-100`} />
 
                 <div className="p-8">
                   <div className="flex gap-6 items-center mb-6">
                     <div className="relative">
-                      <div className="flex justify-center items-center w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full shadow-lg transition-all duration-500 group-hover:shadow-xl group-hover:shadow-blue-500/40">
-                        <Droplets className="w-8 h-8 text-white" />
+                          <div className={`flex justify-center items-center w-16 h-16 bg-gradient-to-br ${colors.from} ${colors.to} rounded-full shadow-lg transition-all duration-500 group-hover:shadow-xl ${colors.hover}`}>
+                            <step.icon className="w-8 h-8 text-white" />
                       </div>
                       <div className="absolute inset-0 w-16 h-16 rounded-full opacity-0 animate-ping bg-blue-400/30 group-hover:opacity-100" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-gray-900 transition-colors duration-300 group-hover:text-blue-600">
-                        Source Water Collection
+                          {step.title && (
+                            <h3 className={`text-2xl font-bold text-gray-900 transition-colors duration-300 group-hover:${colors.text}`}>
+                              {step.title}
                       </h3>
-                      <p className="font-medium text-blue-600">First Step</p>
+                          )}
+                          {step.subtitle && (
+                            <p className={`font-medium ${colors.text}`}>{step.subtitle}</p>
+                          )}
                     </div>
                   </div>
+                      {step.description && (
                   <p className="leading-relaxed text-gray-600">
-                    Premium source water from{" "}
-                    <span className="font-semibold text-blue-600">
-                      protected aquifers
-                    </span>{" "}
-                    and natural springs, ensuring the purest foundation for our
-                    production process.
-                  </p>
+                          {step.description}
+                        </p>
+                      )}
                 </div>
               </div>
             </div>
-
-            {/* Step 2: Purification - Positioned Lower */}
-            <div
-              className="relative mb-8 ml-16"
-              style={{ animation: "stepDown 0.8s ease-out 0.4s both" }}
-            >
-              <div className="overflow-hidden relative rounded-2xl border-2 border-cyan-200 shadow-xl backdrop-blur-sm transition-all duration-500 bg-white/95 hover:shadow-2xl hover:shadow-cyan-500/25 group">
-                <div className="flex absolute -top-4 -left-4 z-10 justify-center items-center w-12 h-12 text-lg font-bold text-white bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full shadow-lg">
-                  02
-                </div>
-
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-blue-500 transition-transform duration-1000 transform origin-left scale-x-0 group-hover:scale-x-100" />
-
-                <div className="p-8">
-                  <div className="flex gap-6 items-center mb-6">
-                    <div className="relative">
-                      <div className="flex justify-center items-center w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full shadow-lg transition-all duration-500 group-hover:shadow-xl group-hover:shadow-cyan-500/40">
-                        <Shield className="w-8 h-8 text-white" />
-                      </div>
-                      <div className="absolute inset-0 w-16 h-16 rounded-full opacity-0 animate-ping bg-cyan-400/30 group-hover:opacity-100" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-gray-900 transition-colors duration-300 group-hover:text-cyan-600">
-                        Advanced Purification
-                      </h3>
-                      <p className="font-medium text-cyan-600">Second Step</p>
-                    </div>
-                  </div>
-                  <p className="leading-relaxed text-gray-600">
-                    Advanced{" "}
-                    <span className="font-semibold text-cyan-600">
-                      multi-stage filtration
-                    </span>{" "}
-                    and purification technology removes impurities while
-                    preserving essential minerals.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 3: Quality Control - Positioned Even Lower */}
-            <div
-              className="relative mb-8 ml-32"
-              style={{ animation: "stepDown 0.8s ease-out 0.6s both" }}
-            >
-              <div className="overflow-hidden relative rounded-2xl border-2 border-blue-200 shadow-xl backdrop-blur-sm transition-all duration-500 bg-white/95 hover:shadow-2xl hover:shadow-blue-500/25 group">
-                <div className="flex absolute -top-4 -left-4 z-10 justify-center items-center w-12 h-12 text-lg font-bold text-white bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full shadow-lg">
-                  03
-                </div>
-
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-cyan-600 transition-transform duration-1000 transform origin-left scale-x-0 group-hover:scale-x-100" />
-
-                <div className="p-8">
-                  <div className="flex gap-6 items-center mb-6">
-                    <div className="relative">
-                      <div className="flex justify-center items-center w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full shadow-lg transition-all duration-500 group-hover:shadow-xl group-hover:shadow-blue-500/40">
-                        <Star className="w-8 h-8 text-white" />
-                      </div>
-                      <div className="absolute inset-0 w-16 h-16 rounded-full opacity-0 animate-ping bg-blue-400/30 group-hover:opacity-100" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-gray-900 transition-colors duration-300 group-hover:text-blue-600">
-                        Quality Assurance
-                      </h3>
-                      <p className="font-medium text-blue-600">Third Step</p>
-                    </div>
-                  </div>
-                  <p className="leading-relaxed text-gray-600">
-                    Rigorous{" "}
-                    <span className="font-semibold text-blue-600">
-                      testing protocols
-                    </span>{" "}
-                    and quality assurance ensure every drop meets our premium
-                    standards.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 4: Packaging - Positioned at Bottom */}
-            <div
-              className="relative mb-8 ml-48"
-              style={{ animation: "stepDown 0.8s ease-out 0.8s both" }}
-            >
-              <div className="overflow-hidden relative rounded-2xl border-2 border-cyan-200 shadow-xl backdrop-blur-sm transition-all duration-500 bg-white/95 hover:shadow-2xl hover:shadow-cyan-500/25 group">
-                <div className="flex absolute -top-4 -left-4 z-10 justify-center items-center w-12 h-12 text-lg font-bold text-white bg-gradient-to-br from-cyan-600 to-blue-600 rounded-full shadow-lg">
-                  04
-                </div>
-
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-600 to-blue-600 transition-transform duration-1000 transform origin-left scale-x-0 group-hover:scale-x-100" />
-
-                <div className="p-8">
-                  <div className="flex gap-6 items-center mb-6">
-                    <div className="relative">
-                      <div className="flex justify-center items-center w-16 h-16 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-full shadow-lg transition-all duration-500 group-hover:shadow-xl group-hover:shadow-cyan-500/40">
-                        <Zap className="w-8 h-8 text-white" />
-                      </div>
-                      <div className="absolute inset-0 w-16 h-16 rounded-full opacity-0 animate-ping bg-cyan-400/30 group-hover:opacity-100" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-gray-900 transition-colors duration-300 group-hover:text-cyan-600">
-                        Final Packaging
-                      </h3>
-                      <p className="font-medium text-cyan-600">Final Step</p>
-                    </div>
-                  </div>
-                  <p className="leading-relaxed text-gray-600">
-                    Automated{" "}
-                    <span className="font-semibold text-cyan-600">
-                      bottling and sealing
-                    </span>{" "}
-                    in sterile environment preserves freshness and quality until
-                    delivery.
-                  </p>
-                </div>
-              </div>
-            </div>
+              );
+            })}
 
             {/* Connecting Flow Lines */}
             <div className="absolute top-24 left-8 w-0.5 h-full bg-gradient-to-b from-blue-300 via-cyan-300 to-blue-400 opacity-30">
@@ -1055,7 +884,10 @@ export function WaterProductionTemplate({ business, content, template, preview =
           }
         `}</style>
       </section>
+      )}
 
+      {/* Contact Section - Only render if data exists */}
+      {hasContactContent && (
       <section
         data-section
         id="contact"
@@ -1116,31 +948,27 @@ export function WaterProductionTemplate({ business, content, template, preview =
         <div className="relative z-10 px-4 mx-auto max-w-6xl text-center sm:px-6 lg:px-8">
           {/* Enhanced Header */}
           <div className="mb-16">
+            {contactTitle && (
             <div className="inline-flex gap-4 items-center mb-6">
               <div className="flex justify-center items-center w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full shadow-2xl">
                 <Droplets className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-cyan-300 to-blue-300">
-                Pure Water, Delivered Fresh
+                {contactTitle}
               </h2>
             </div>
+            )}
+            {contactDescription && (
             <p className="mx-auto max-w-4xl text-xl leading-relaxed text-gray-300">
-              Experience{" "}
-              <span className="font-semibold text-blue-300">
-                premium water delivery
-              </span>{" "}
-              services,
-              <span className="font-semibold text-cyan-300">bulk orders</span>,
-              or visit our
-              <span className="font-semibold text-blue-300">
-                state-of-the-art production facility
-              </span>
+              {contactDescription}
             </p>
+            )}
           </div>
 
           {/* Contact Cards Grid */}
           <div className="grid grid-cols-1 gap-8 mb-12 md:grid-cols-2">
             {/* Phone Contact */}
+            {contactPhone && (
             <div className="group">
               <div className="overflow-hidden relative p-8 rounded-2xl border shadow-2xl backdrop-blur-sm transition-all duration-500 bg-white/10 border-blue-400/30 hover:shadow-blue-500/25 hover:scale-105 hover:bg-white/15">
                 {/* Water Flow Effect */}
@@ -1155,22 +983,20 @@ export function WaterProductionTemplate({ business, content, template, preview =
                   <h3 className="mb-4 text-2xl font-bold text-white transition-colors duration-300 group-hover:text-blue-300">
                     Call for Delivery
                   </h3>
-                  <p className="mb-6 leading-relaxed text-gray-300">
-                    Instant water delivery to your doorstep. Available 24/7 for
-                    emergency orders.
-                  </p>
                   <a
-                    href="tel:+1234567890"
+                    href={`tel:${contactPhone}`}
                     className="inline-flex gap-3 items-center px-6 py-3 font-semibold text-white bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full shadow-lg transition-all duration-300 hover:shadow-blue-500/40 hover:scale-105"
                   >
                     <Phone className="w-5 h-5" />
-                    <span>Call Now</span>
+                    <span>{contactPhone}</span>
                   </a>
                 </div>
               </div>
             </div>
+            )}
 
             {/* Email Contact */}
+            {contactEmail && (
             <div className="group">
               <div className="overflow-hidden relative p-8 rounded-2xl border shadow-2xl backdrop-blur-sm transition-all duration-500 bg-white/10 border-cyan-400/30 hover:shadow-cyan-500/25 hover:scale-105 hover:bg-white/15">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-blue-500 transition-transform duration-1000 transform origin-left scale-x-0 group-hover:scale-x-100" />
@@ -1183,34 +1009,22 @@ export function WaterProductionTemplate({ business, content, template, preview =
                   <h3 className="mb-4 text-2xl font-bold text-white transition-colors duration-300 group-hover:text-cyan-300">
                     Email Inquiries
                   </h3>
-                  <p className="mb-6 leading-relaxed text-gray-300">
-                    Get detailed information about bulk orders, pricing, and
-                    custom solutions.
-                  </p>
                   <a
-                    href="mailto:water@bundu.com"
+                    href={`mailto:${contactEmail}`}
                     className="inline-flex gap-3 items-center px-6 py-3 font-semibold text-white bg-gradient-to-r from-cyan-600 to-blue-600 rounded-full shadow-lg transition-all duration-300 hover:shadow-cyan-500/40 hover:scale-105"
                   >
                     <Mail className="w-5 h-5" />
-                    <span>Send Email</span>
+                    <span>{contactEmail}</span>
                   </a>
                 </div>
               </div>
             </div>
+            )}
           </div>
 
-          {/* Premium Water Badge */}
-          <div className="inline-flex gap-4 items-center px-8 py-4 bg-gradient-to-r rounded-full border shadow-xl backdrop-blur-sm from-blue-600/20 via-cyan-600/20 to-blue-600/20 border-blue-400/30">
-            <div className="flex justify-center items-center w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full">
-              <Star className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-semibold text-white">
-              Premium Water Solutions
-            </span>
-            <div className="w-3 h-3 rounded-full animate-pulse bg-blue-400/50" />
-          </div>
         </div>
       </section>
+      )}
 
       <Footer />
     </div>
