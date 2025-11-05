@@ -57,51 +57,34 @@ export function SalonTemplate({ business, content, template, preview = false }: 
     return () => observer.disconnect();
   }, []);
 
-  const services = [
-    {
-      name: "Hair Styling",
-      price: "$85",
-      duration: "60 min",
-      description: "Expert cuts, color, and styling for your perfect look",
-      image:
-        "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&h=600&fit=crop&crop=center",
-      features: ["Consultation", "Wash & Cut", "Styling", "Aftercare"],
-    },
-    {
-      name: "Facial Treatments",
-      price: "$120",
-      duration: "75 min",
-      description: "Rejuvenating skincare treatments for glowing skin",
-      image:
-        "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&h=600&fit=crop&crop=center",
-      features: [
-        "Deep Cleansing",
-        "Exfoliation",
-        "Mask Treatment",
-        "Moisturizing",
-      ],
-    },
-    {
-      name: "Nail Care",
-      price: "$45",
-      duration: "45 min",
-      description: "Creative nail designs and professional care",
-      image:
-        "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&h=600&fit=crop&crop=center",
-      features: ["Manicure", "Pedicure", "Nail Art", "Polish"],
-    },
-    {
-      name: "Bridal Package",
-      price: "$350",
-      duration: "4 hours",
-      description: "Complete bridal transformation for your special day",
-      image:
-        "https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=800&h=600&fit=crop&crop=center",
-      features: ["Hair Styling", "Makeup", "Nail Care", "Touch-ups"],
-    },
-  ];
+  const hero = (content && (content as any).hero) || null;
+  const statsContent = (content && (content as any).stats) || null;
+  const servicesContent = (content && (content as any).services) || null;
+  const featuresContent = (content && (content as any).features) || null;
+  const contactContent = (content && (content as any).contact) || null;
+  const galleryContent = (content && (content as any).gallery) || null;
 
-  const stats = [
+  const services = Array.isArray(servicesContent?.services)
+    ? servicesContent.services.map((s: any) => ({
+        name: s.title || s.name || '',
+        price: s.price || '',
+        duration: s.duration || '',
+        description: s.description || '',
+        image: s.image || '',
+        features: Array.isArray(s.features) ? s.features : [],
+      }))
+    : [];
+
+  useEffect(() => {
+    // Clamp active index when services length changes
+    if (activeService >= services.length) {
+      setActiveService(0);
+    }
+  }, [services.length]);
+
+  const stats = (statsContent?.stats && statsContent.stats.length > 0)
+    ? statsContent.stats.map((s: any) => ({ number: s.value, label: s.label }))
+    : [
     { number: "15+", label: "Happy Patients" },
     { number: "10+", label: "Premium Products" },
     { number: "15+", label: "Beauty Experts" },
@@ -166,7 +149,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
             {/* Left Section */}
             <div className="flex flex-col order-2 gap-4 sm:gap-6 lg:order-1">
               <h1 className="mb-4 text-3xl font-bold tracking-tight leading-tight text-center sm:mb-8 sm:text-4xl lg:text-5xl text-slate-700 lg:text-left">
-                Enhancing your beauty to let you shine
+                {hero?.title || 'Enhancing your beauty to let you shine'}
               </h1>
 
               <div className="flex justify-center items-center mx-auto mb-3 w-10 h-10 text-lg font-bold text-white bg-gray-800 rounded-full lg:justify-start sm:mb-5 lg:mx-0"></div>
@@ -181,7 +164,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                   }}
                 >
                   <img
-                    src="https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"
+                    src={hero?.backgroundImage || "https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"}
                     alt="Beauty treatment"
                     className="object-cover w-full h-full"
                   />
@@ -200,7 +183,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 }}
               >
                 <img
-                  src="https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"
+                  src={hero?.backgroundImage || "https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"}
                   alt="Woman applying skincare"
                   className="object-cover w-full h-full"
                 />
@@ -219,7 +202,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                   }}
                 >
                   <img
-                    src="https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"
+                    src={hero?.backgroundImage || "https://www.snow.edu/academics/bat/cosmetology/images/salon-service.jpg"}
                     alt="Woman with flowers"
                     className="object-cover w-full h-full"
                   />
@@ -236,21 +219,8 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                   Our Story
                 </h2>
                 <p className="mb-3 text-sm text-center text-gray-600 lg:text-left">
-                  Our goal is to bring out the best version of you by
-                  highlighting your natural beauty with personalized care and
-                  attention to detail.
+                  {hero?.description || ''}
                 </p>
-                <div className="flex justify-center lg:justify-start">
-                  <a
-                    href="#"
-                    className="inline-flex gap-2 items-center text-sm font-semibold text-gray-800 no-underline transition-all duration-300 hover:gap-3"
-                  >
-                    Read More
-                    <span className="transition-transform duration-300 hover:translate-x-1">
-                      →
-                    </span>
-                  </a>
-                </div>
               </div>
             </div>
           </div>
@@ -269,19 +239,19 @@ export function SalonTemplate({ business, content, template, preview = false }: 
             >
               <div className="relative px-2 text-center sm:px-4">
                 <div className="mb-1 text-2xl font-extrabold sm:mb-2 sm:text-3xl lg:text-4xl text-slate-700">
-                  15+
+                  {stats[0]?.number}
                 </div>
                 <div className="text-xs font-semibold tracking-wide text-gray-600 sm:text-sm">
-                  Happy Patients
+                  {stats[0]?.label}
                 </div>
               </div>
 
               <div className="relative px-2 text-center sm:px-4">
                 <div className="mb-1 text-2xl font-extrabold sm:mb-2 sm:text-3xl lg:text-4xl text-slate-700">
-                  10+
+                  {stats[1]?.number}
                 </div>
                 <div className="text-xs font-semibold tracking-wide text-gray-600 sm:text-sm">
-                  Premium Products
+                  {stats[1]?.label}
                 </div>
               </div>
 
@@ -308,19 +278,19 @@ export function SalonTemplate({ business, content, template, preview = false }: 
 
               <div className="relative px-2 text-center sm:px-4">
                 <div className="mb-1 text-2xl font-extrabold sm:mb-2 sm:text-3xl lg:text-4xl text-slate-700">
-                  15+
+                  {stats[2]?.number}
                 </div>
                 <div className="text-xs font-semibold tracking-wide text-gray-600 sm:text-sm">
-                  Beauty Experts
+                  {stats[2]?.label}
                 </div>
               </div>
 
               <div className="relative px-2 text-center sm:px-4">
                 <div className="mb-1 text-2xl font-extrabold sm:mb-2 sm:text-3xl lg:text-4xl text-slate-700">
-                  10+
+                  {stats[3]?.number}
                 </div>
                 <div className="text-xs font-semibold tracking-wide text-gray-600 sm:text-sm">
-                  Years Experience
+                  {stats[3]?.label}
                 </div>
               </div>
             </div>
@@ -344,7 +314,18 @@ export function SalonTemplate({ business, content, template, preview = false }: 
 
           {/* Features Grid */}
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {/* Feature 1 */}
+            {Array.isArray(featuresContent?.features) && featuresContent.features.length > 0 ? (
+              featuresContent.features.slice(0, 6).map((feat: string, idx: number) => (
+                <div key={idx} className={`p-8 text-center ${idx % 2 === 0 ? 'bg-[#f3e6dd]' : 'bg-white'} rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2`}>
+                  <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
+                    {idx % 3 === 0 ? <Star className="w-8 h-8 text-white" /> : idx % 3 === 1 ? <Scissors className="w-8 h-8 text-white" /> : <Clock className="w-8 h-8 text-white" />}
+                  </div>
+                  <h3 className="mb-4 text-xl font-bold text-black">{feat}</h3>
+                  <p className="leading-relaxed text-gray-600">{business?.description || 'We provide premium salon services tailored to you.'}</p>
+                </div>
+              ))
+            ) : (
+              <>
             <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
               <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
                 <Star className="w-8 h-8 text-white" />
@@ -357,8 +338,6 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 updated with the latest trends and techniques.
               </p>
             </div>
-
-            {/* Feature 2 */}
             <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
               <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
                 <Scissors className="w-8 h-8 text-white" />
@@ -371,8 +350,6 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 hair while delivering stunning results.
               </p>
             </div>
-
-            {/* Feature 3 */}
             <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
               <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
                 <Clock className="w-8 h-8 text-white" />
@@ -385,8 +362,6 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 treatments tailored to their unique needs.
               </p>
             </div>
-
-            {/* Feature 4 */}
             <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
               <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
                 <Star className="w-8 h-8 text-white" />
@@ -399,8 +374,6 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 your visit a truly pampering experience.
               </p>
             </div>
-
-            {/* Feature 5 */}
             <div className="p-8 text-center bg-[#f3e6dd] rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
               <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
                 <Clock className="w-8 h-8 text-white" />
@@ -413,8 +386,6 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 convenient online booking system.
               </p>
             </div>
-
-            {/* Feature 6 */}
             <div className="p-8 text-center bg-white rounded-3xl transition-all duration-300 group hover:shadow-xl hover:-translate-y-2">
               <div className="inline-flex justify-center items-center mb-6 w-16 h-16 bg-black rounded-2xl">
                 <Scissors className="w-8 h-8 text-white" />
@@ -427,6 +398,8 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 you love your new look.
               </p>
             </div>
+              </>
+            )}
           </div>
 
           {/* Call to Action */}
@@ -444,14 +417,15 @@ export function SalonTemplate({ business, content, template, preview = false }: 
         <div className="mx-auto max-w-7xl">
           <div className="mb-16 text-center">
             <h2 className="mb-6 text-4xl font-bold text-black">
-              Our Categories
+              {servicesContent?.title}
             </h2>
           </div>
 
+          {services.length > 0 && (
           <div className="grid gap-8 md:grid-cols-2">
             {/* Left Side - Service List */}
             <div className="space-y-6">
-              {services.map((service, index) => (
+              {services.map((service: any, index: number) => (
                 <div
                   key={index}
                   className={`p-6 rounded-2xl cursor-pointer transition-all duration-300 ${
@@ -478,39 +452,50 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                       <div className="text-2xl font-bold text-black">
                         {service.price}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {service.duration}
-                      </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Right Side - Active Service Image */}
-            <div className="relative">
-              <img
-                src={services[activeService].image}
-                alt={services[activeService].name}
-                className="object-cover w-full h-96 rounded-3xl shadow-lg"
-              />
-              <div className="absolute bottom-6 left-6 p-4 rounded-2xl backdrop-blur-sm bg-white/90">
-                <h4 className="mb-2 font-semibold text-gray-900">
-                  {services[activeService].name}
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {services[activeService].features.map((feature, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-1 text-xs text-white bg-black rounded-full"
-                    >
-                      {feature}
-                    </span>
-                  ))}
+            {/* Right Side - Active Service Panel (stable layout) */}
+            <div className="relative h-96">
+              {services[activeService] && services[activeService].image ? (
+                <img
+                  src={services[activeService].image}
+                  alt={services[activeService].name}
+                  className="object-cover w-full h-full rounded-3xl shadow-lg"
+                />
+              ) : (
+                <div
+                  className="w-full h-full rounded-3xl shadow-lg"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(243,230,221,1) 0%, rgba(250,245,241,1) 100%)",
+                  }}
+                />
+              )}
+              {services[activeService] && (
+                <div className="absolute bottom-6 left-6 p-4 max-w-[85%] rounded-2xl backdrop-blur-sm bg-white/90">
+                  <div className="flex flex-wrap gap-2 max-h-20 overflow-y-auto pr-1">
+                    {[
+                      "Professional Stylists",
+                      "Personalized Care",
+                      "Attention to Detail",
+                    ].map((feature, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-1 text-xs text-white bg-black rounded-full whitespace-nowrap"
+                      >
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
+          )}
         </div>
       </section>
 
@@ -529,10 +514,10 @@ export function SalonTemplate({ business, content, template, preview = false }: 
           </div>
 
           <div className="grid gap-8 mb-16 md:grid-cols-2 lg:grid-cols-4">
-            {testimonials.map((item, index) => (
+                {(stats && stats.length >= 4 ? stats.slice(0,4) : testimonials).map((item: any, index: number) => (
               <div key={index} className="p-6 text-center bg-white rounded-2xl">
                 <div className="mb-2 text-3xl font-bold text-black">
-                  {item.rating}
+                  {(item as any).rating || (item as any).number}
                 </div>
                 <div className="text-gray-600">{item.label}</div>
               </div>
@@ -546,10 +531,10 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 <Award className="w-8 h-8 text-white" />
               </div>
               <h3 className="mb-3 text-xl font-semibold text-black">
-                Premium Quality
+                {(featuresContent?.features && featuresContent.features[0]) || 'Premium Quality'}
               </h3>
               <p className="text-gray-600">
-                Top-tier products and services for the best results
+                {business?.description || 'Top-tier products and services for the best results'}
               </p>
             </div>
 
@@ -558,10 +543,10 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 <Users className="w-8 h-8 text-white" />
               </div>
               <h3 className="mb-3 text-xl font-semibold text-black">
-                Expert Team
+                {(featuresContent?.features && featuresContent.features[1]) || 'Expert Team'}
               </h3>
               <p className="text-gray-600">
-                Skilled and certified beauty professionals
+                {business?.description || 'Skilled and certified beauty professionals'}
               </p>
             </div>
 
@@ -570,79 +555,90 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                 <Heart className="w-8 h-8 text-white" />
               </div>
               <h3 className="mb-3 text-xl font-semibold text-black">
-                Personalized Care
+                {(featuresContent?.features && featuresContent.features[2]) || 'Personalized Care'}
               </h3>
               <p className="text-gray-600">
-                Customized treatments for your unique needs
+                {business?.description || 'Customized treatments for your unique needs'}
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="px-4 py-24 bg-white" data-section>
+      {/* Gallery Section */}
+      {/* <section className="px-4 py-24 bg-white" data-section>
         <div className="mx-auto max-w-7xl">
           <div className="mb-16 text-center">
             <h2 className="mb-6 text-4xl font-bold text-black">
-              We Are Experienced In Making
-              <span className="block text-black">You More Beautiful</span>
+              {galleryContent?.title || 'Our Gallery'}
             </h2>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3">
-            {stylists.map((stylist, index) => (
-              <div
-                key={index}
-                className="overflow-hidden bg-white rounded-3xl shadow-lg transition-shadow duration-300 hover:shadow-xl"
-              >
-                <div className="relative">
-                  <img
-                    src={stylist.image}
-                    alt={stylist.name}
-                    className="object-cover w-full h-64"
-                  />
-                  {/* <div className="absolute top-4 right-4 px-3 py-1 rounded-full backdrop-blur-sm bg-white/90">
-                    <div className="flex gap-1 items-center">
-                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                      <span className="text-sm font-medium">
-                        {stylist.rating}
-                      </span>
+          {galleryContent?.images && galleryContent.images.length > 0 && (
+            <div className="grid gap-8 md:grid-cols-3">
+              {galleryContent.images.slice(0, 6).map((item: any, index: number) => (
+                <div
+                  key={index}
+                  className="overflow-hidden bg-white rounded-3xl shadow-lg transition-shadow duration-300 hover:shadow-xl"
+                >
+                  <div className="relative">
+                    <img
+                      src={item.url || item}
+                      alt={item.alt || item.caption || `Gallery image ${index + 1}`}
+                      className="object-cover w-full h-64"
+                    />
+                  </div>
+
+                  {item.caption && (
+                    <div className="p-6">
+                      <p className="text-sm text-gray-600 truncate">
+                        {item.caption}
+                      </p>
                     </div>
-                  </div> */}
+                  )}
                 </div>
-
-                <div className="p-6">
-                  <h3 className="mb-2 text-xl font-semibold text-black">
-                    {stylist.name}
-                  </h3>
-                  <p className="mb-1 font-medium text-black">
-                    {stylist.specialty}
-                  </p>
-                  <p className="mb-4 text-sm text-gray-600">
-                    {stylist.experience} experience
-                  </p>
-
-                  {/* <div className="flex justify-between items-center">
-                    <div className="flex gap-3">
-                      <button className="flex justify-center items-center w-8 h-8 bg-gray-100 rounded-full transition-colors hover:bg-orange-100">
-                        <Instagram className="w-4 h-4 text-gray-600" />
-                      </button>
-                      <button className="flex justify-center items-center w-8 h-8 bg-gray-100 rounded-full transition-colors hover:bg-orange-100">
-                        <Facebook className="w-4 h-4 text-gray-600" />
-                      </button>
-                    </div>
-
-                    <button className="px-4 py-2 text-sm font-medium text-white bg-black rounded-full transition-colors hover:bg-gray-800">
-                      Book Now
-                    </button>
-                  </div> */}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
-      </section>
+      </section> */}
+
+<section className="px-4 py-24 bg-white" data-section>
+  <div className="mx-auto max-w-7xl">
+    <div className="mb-16 text-center">
+      <h2 className="mb-6 text-4xl font-bold text-black">
+        {galleryContent?.title || 'Our Gallery'}
+      </h2>
+    </div>
+
+    {galleryContent?.images && galleryContent.images.length > 0 && (
+      <div className="grid gap-8 md:grid-cols-3">
+        {galleryContent.images.slice(0, 6).map((item: any, index: number) => (
+          <div
+            key={index}
+            className="overflow-hidden bg-white rounded-3xl shadow-lg transition-shadow duration-300 hover:shadow-xl"
+          >
+            <div className="relative aspect-[4/3]">
+              <img
+                src={item.url || item}
+                alt={item.alt || item.caption || `Gallery image ${index + 1}`}
+                className="object-contain w-full h-full bg-gray-50"
+              />
+            </div>
+
+            {item.caption && (
+              <div className="p-6">
+                <p className="text-sm text-gray-600 truncate">
+                  {item.caption}
+                </p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
 
       {/* Get Beauty Treatments Section */}
       <section
@@ -732,7 +728,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                   <div className="mb-2 text-lg font-semibold text-black">
                     Call Us
                   </div>
-                  <div className="text-gray-600">+1 (555) BEAUTY</div>
+                  <div className="text-gray-600">{contactContent?.phone || business?.contact?.phone || '+1 (555) BEAUTY'}</div>
                 </div>
               </div>
 
@@ -744,7 +740,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                   <div className="mb-2 text-lg font-semibold text-black">
                     Email Us
                   </div>
-                  <div className="text-gray-600">hello@bundusalon.com</div>
+                  <div className="text-gray-600">{contactContent?.email || business?.contact?.email || 'hello@bundusalon.com'}</div>
                 </div>
               </div>
 
@@ -757,7 +753,7 @@ export function SalonTemplate({ business, content, template, preview = false }: 
                     Visit Us
                   </div>
                   <div className="text-gray-600">
-                    123 Beauty Street, City Center
+                    {contactContent?.address || business?.contact?.address || '123 Beauty Street, City Center'}
                   </div>
                 </div>
               </div>
@@ -840,7 +836,6 @@ export function SalonTemplate({ business, content, template, preview = false }: 
         </div>
       </section>
 
-      <Footer />
     </div>
   );
 }

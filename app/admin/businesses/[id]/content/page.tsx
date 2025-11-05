@@ -30,6 +30,8 @@ import {
 import Link from "next/link";
 import { HeroEditor } from "@/components/admin/content-editors/HeroEditor";
 import { GalleryEditor } from "@/components/admin/content-editors/GalleryEditor";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { MediaPicker } from "@/components/admin/MediaPicker";
 
 interface ContentSection {
   id: string;
@@ -92,6 +94,7 @@ export default function BusinessContentPage() {
   const [business, setBusiness] = useState<any>(null);
   const [sections, setSections] = useState<ContentSection[]>([]);
   const [activeTab, setActiveTab] = useState("hero");
+  const [addServiceOpenId, setAddServiceOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBusinessContent();
@@ -431,41 +434,159 @@ export default function BusinessContentPage() {
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-medium">Services</label>
-          <Button size="sm" variant="outline">
-            <Plus className="w-4 h-4 mr-1" />
-            Add Service
-          </Button>
+          <Dialog modal={false} open={addServiceOpenId === section.id} onOpenChange={(o) => setAddServiceOpenId(o ? section.id : null)}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" onClick={() => setAddServiceOpenId(section.id)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Add Service
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Service</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Input id="svc-name" placeholder="Service name" />
+                  <Input id="svc-price" placeholder="Price (e.g. $85)" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input id="svc-image" placeholder="Image URL" className="flex-1" />
+                    <MediaPicker
+                      trigger={<Button variant="outline" size="sm">Pick/Upload</Button>}
+                      selectionMode="single"
+                      acceptedTypes={['image']}
+                      onSelect={(media: any) => {
+                        const url = media?.url;
+                        const input = document.getElementById('svc-image') as HTMLInputElement | null;
+                        if (input && url) input.value = url;
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Choose from Cloudinary library or upload from device</p>
+                </div>
+                <Textarea id="svc-desc" placeholder="Service description" />
+              </div>
+              <DialogFooter>
+                <Button onClick={async () => {
+                  const name = (document.getElementById('svc-name') as HTMLInputElement)?.value?.trim() || '';
+                  const price = (document.getElementById('svc-price') as HTMLInputElement)?.value?.trim() || '';
+                  const image = (document.getElementById('svc-image') as HTMLInputElement)?.value?.trim() || '';
+                  const description = (document.getElementById('svc-desc') as HTMLTextAreaElement)?.value?.trim() || '';
+
+                  if (!name) {
+                    alert('Service name is required');
+                    return;
+                  }
+
+                  const newService = {
+                    name,
+                    title: name,
+                    description,
+                    image,
+                    price,
+                    duration: '',
+                    features: [] as string[],
+                    category: ''
+                  };
+
+                  const nextServices = Array.isArray(section.content.services)
+                    ? [...section.content.services, newService]
+                    : [newService];
+
+                  // Remove any empty placeholder services just in case
+                  const cleanedServices = nextServices.filter((s: any) => (s?.name || s?.title)?.trim());
+                  const newContent = { ...section.content, services: cleanedServices };
+
+                  // Update local state
+                  setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+
+                  // Persist immediately
+                  try {
+                    await saveSection(section.id, newContent);
+                    setAddServiceOpenId(null);
+                  } catch (e) {
+                    console.warn('Failed to persist new service immediately, it remains in local state.');
+                  }
+                }}>
+                  Save Service
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
         <div className="space-y-3">
-          {section.content.services.map((service: any, index: number) => (
+          {section.content.services?.filter((service: any) => (service?.name || service?.title)?.trim()).map((service: any, index: number) => (
             <Card key={index}>
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-muted-foreground">Service {index + 1}</div>
+                  <Button size="icon" variant="ghost" onClick={() => {
+                    const newServices = (section.content.services || []).filter((_: any, i: number) => i !== index);
+                    const newContent = { ...section.content, services: newServices };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <Input
-                    value={service.name}
+                    value={service.name ?? ''}
                     onChange={(e) => {
-                      const newServices = [...section.content.services];
-                      newServices[index] = { ...service, name: e.target.value };
+                      const value = e.target.value;
+                      const newServices = [...(section.content.services || [])];
+                      newServices[index] = { 
+                        ...service, 
+                        name: value,
+                        title: (service.title ?? '') === (service.name ?? '') || !service.title ? value : service.title
+                      };
                       const newContent = { ...section.content, services: newServices };
                       setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
                     }}
                     placeholder="Service name"
                   />
                   <Input
-                    value={service.icon}
+                    value={service.price ?? ''}
                     onChange={(e) => {
-                      const newServices = [...section.content.services];
-                      newServices[index] = { ...service, icon: e.target.value };
+                      const newServices = [...(section.content.services || [])];
+                      newServices[index] = { ...service, price: e.target.value };
                       const newContent = { ...section.content, services: newServices };
                       setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
                     }}
-                    placeholder="Icon name"
+                    placeholder="Price (e.g. $85)"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={service.image ?? ''}
+                    onChange={(e) => {
+                      const newServices = [...(section.content.services || [])];
+                      newServices[index] = { ...service, image: e.target.value };
+                      const newContent = { ...section.content, services: newServices };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Image URL"
+                    className="flex-1"
+                  />
+                  <MediaPicker
+                    trigger={<Button variant="outline" size="sm">Pick/Upload</Button>}
+                    selectionMode="single"
+                    acceptedTypes={['image']}
+                    onSelect={(media: any) => {
+                      const url = media?.url;
+                      if (!url) return;
+                      const newServices = [...(section.content.services || [])];
+                      newServices[index] = { ...service, image: url };
+                      const newContent = { ...section.content, services: newServices };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
                   />
                 </div>
                 <Textarea
-                  value={service.description}
+                  value={service.description ?? ''}
                   onChange={(e) => {
-                    const newServices = [...section.content.services];
+                    const newServices = [...(section.content.services || [])];
                     newServices[index] = { ...service, description: e.target.value };
                     const newContent = { ...section.content, services: newServices };
                     setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
@@ -479,7 +600,14 @@ export default function BusinessContentPage() {
         </div>
       </div>
       <Button 
-        onClick={() => saveSection(section.id, section.content)}
+        onClick={() => {
+          const cleaned = {
+            ...section.content,
+            services: (section.content.services || []).filter((svc: any) => (svc?.name || svc?.title)?.trim())
+          };
+          setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: cleaned } : s));
+          return saveSection(section.id, cleaned);
+        }}
         disabled={isSaving}
       >
         {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
