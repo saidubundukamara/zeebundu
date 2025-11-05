@@ -26,7 +26,8 @@ import {
   Calendar,
   AlertCircle,
   Loader2,
-  DollarSign
+  DollarSign,
+  Truck
 } from "lucide-react";
 import Link from "next/link";
 import { HeroEditor } from "@/components/admin/content-editors/HeroEditor";
@@ -37,7 +38,7 @@ import { MediaPicker } from "@/components/admin/MediaPicker";
 
 interface ContentSection {
   id: string;
-  type: 'hero' | 'about' | 'services' | 'gallery' | 'testimonials' | 'contact' | 'exchangeRates';
+  type: 'hero' | 'about' | 'services' | 'gallery' | 'testimonials' | 'contact' | 'exchangeRates' | 'operations' | 'livestockCategories' | 'regionalImpact';
   title: string;
   content: any;
   isActive: boolean;
@@ -97,6 +98,10 @@ export default function BusinessContentPage() {
   const [sections, setSections] = useState<ContentSection[]>([]);
   const [activeTab, setActiveTab] = useState("hero");
   const [addServiceOpenId, setAddServiceOpenId] = useState<string | null>(null);
+  const [addProductOpenId, setAddProductOpenId] = useState<string | null>(null);
+  const [addCategoryOpenId, setAddCategoryOpenId] = useState<string | null>(null);
+  const [addFoodSecurityPointOpenId, setAddFoodSecurityPointOpenId] = useState<string | null>(null);
+  const [addProcessingPointOpenId, setAddProcessingPointOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBusinessContent();
@@ -191,6 +196,65 @@ export default function BusinessContentPage() {
                   exchangeRatesSection.content.description = "Competitive foreign exchange rates available at all our bureau locations.";
                 }
               }
+            }
+          }
+
+          // If this is a livestock template, ensure livestock-specific sections exist
+          if (businessData?.template === 'livestock') {
+            // Operations section
+            const operationsIndex = fetchedSections.findIndex((s: any) => s.type === 'operations' || s.id === 'operations');
+            if (operationsIndex === -1) {
+              fetchedSections.push({
+                id: "operations",
+                type: "operations",
+                title: "Farm Operations",
+                isActive: true,
+                content: {
+                  title: "Sustainable Livestock Excellence",
+                  subtitle: "Livestock",
+                  description: "Livestock farming for beef and dairy production, supporting regional food security and contributing to local meat processing industries.",
+                  farmName: "Cattle Farm",
+                  farmType: "Premium Beef & Dairy",
+                  products: [],
+                  stats: []
+                }
+              });
+            }
+
+            // Livestock Categories section
+            const livestockCategoriesIndex = fetchedSections.findIndex((s: any) => s.type === 'livestockCategories' || s.id === 'livestockCategories');
+            if (livestockCategoriesIndex === -1) {
+              fetchedSections.push({
+                id: "livestockCategories",
+                type: "livestockCategories",
+                title: "Livestock Categories",
+                isActive: true,
+                content: {
+                  title: "Heritage Livestock Excellence",
+                  description: "Premium breeds raised with care in natural environments for optimal health and quality, supporting sustainable agriculture.",
+                  categories: []
+                }
+              });
+            }
+
+            // Regional Impact section
+            const regionalImpactIndex = fetchedSections.findIndex((s: any) => s.type === 'regionalImpact' || s.id === 'regionalImpact');
+            if (regionalImpactIndex === -1) {
+              fetchedSections.push({
+                id: "regionalImpact",
+                type: "regionalImpact",
+                title: "Regional Impact",
+                isActive: true,
+                content: {
+                  title: "Supporting Regional Food Security",
+                  description: "Our livestock operations play a vital role in strengthening regional food systems and contributing to local meat processing industries, ensuring sustainable food security for our communities.",
+                  foodSecurityTitle: "Food Security Impact",
+                  processingTitle: "Local Processing Partnership",
+                  foodSecurityPoints: [],
+                  processingPartnershipPoints: [],
+                  stats: []
+                }
+              });
             }
           }
           
@@ -730,6 +794,794 @@ export default function BusinessContentPage() {
     </div>
   );
 
+  const renderOperationsEditor = (section: ContentSection) => (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium">Title</label>
+          <Input
+            value={section.content.title || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, title: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Section title"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Subtitle</label>
+          <Input
+            value={section.content.subtitle || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, subtitle: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Section subtitle"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="text-sm font-medium">Description</label>
+        <Textarea
+          value={section.content.description || ''}
+          onChange={(e) => {
+            const newContent = { ...section.content, description: e.target.value };
+            setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+          }}
+          placeholder="Description"
+          className="min-h-[100px]"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium">Farm Name</label>
+          <Input
+            value={section.content.farmName || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, farmName: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Cattle Farm"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Farm Type</label>
+          <Input
+            value={section.content.farmType || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, farmType: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Premium Beef & Dairy"
+          />
+        </div>
+      </div>
+      
+      {/* Products Section */}
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-medium">Products</label>
+          <Dialog modal={false} open={addProductOpenId === section.id} onOpenChange={(o) => setAddProductOpenId(o ? section.id : null)}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" onClick={() => setAddProductOpenId(section.id)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Add Product
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Add New Product</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Input id="prod-name" placeholder="Product name" />
+                  <Input id="prod-category" placeholder="Category (e.g. Beef Products)" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input id="prod-price" placeholder="Price (e.g. $18/lb)" />
+                  <Input id="prod-icon" placeholder="Icon name (e.g. Beef, Heart, Award)" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input id="prod-image" placeholder="Image URL" className="flex-1" />
+                    <MediaPicker
+                      trigger={<Button variant="outline" size="sm">Pick/Upload</Button>}
+                      selectionMode="single"
+                      acceptedTypes={['image']}
+                      onSelect={(media: any) => {
+                        const url = media?.url;
+                        const input = document.getElementById('prod-image') as HTMLInputElement | null;
+                        if (input && url) input.value = url;
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Choose from library or upload</p>
+                </div>
+                <Textarea id="prod-desc" placeholder="Product description" />
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Features (one per line)</label>
+                  <Textarea id="prod-features" placeholder="Grass-Fed&#10;Local Processing&#10;Premium Cuts" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={async () => {
+                  const name = (document.getElementById('prod-name') as HTMLInputElement)?.value?.trim() || '';
+                  const category = (document.getElementById('prod-category') as HTMLInputElement)?.value?.trim() || '';
+                  const price = (document.getElementById('prod-price') as HTMLInputElement)?.value?.trim() || '';
+                  const icon = (document.getElementById('prod-icon') as HTMLInputElement)?.value?.trim() || 'Beef';
+                  const image = (document.getElementById('prod-image') as HTMLInputElement)?.value?.trim() || '';
+                  const description = (document.getElementById('prod-desc') as HTMLTextAreaElement)?.value?.trim() || '';
+                  const featuresText = (document.getElementById('prod-features') as HTMLTextAreaElement)?.value?.trim() || '';
+                  const features = featuresText.split('\n').filter(f => f.trim());
+
+                  if (!name) {
+                    alert('Product name is required');
+                    return;
+                  }
+
+                  const newProduct = {
+                    name,
+                    category,
+                    price,
+                    icon,
+                    image,
+                    description,
+                    features
+                  };
+
+                  const nextProducts = Array.isArray(section.content.products)
+                    ? [...section.content.products, newProduct]
+                    : [newProduct];
+
+                  const cleanedProducts = nextProducts.filter((p: any) => p?.name?.trim());
+                  const newContent = { ...section.content, products: cleanedProducts };
+
+                  setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+
+                  try {
+                    await saveSection(section.id, newContent);
+                    setAddProductOpenId(null);
+                    // Clear form
+                    ['prod-name', 'prod-category', 'prod-price', 'prod-icon', 'prod-image', 'prod-desc', 'prod-features'].forEach(id => {
+                      const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement;
+                      if (el) el.value = '';
+                    });
+                  } catch (e) {
+                    console.warn('Failed to persist new product immediately');
+                  }
+                }}>
+                  Save Product
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="space-y-3">
+          {(section.content.products || []).filter((p: any) => p?.name?.trim()).map((product: any, index: number) => (
+            <Card key={index}>
+              <CardContent className="pt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-muted-foreground">Product {index + 1}</div>
+                  <Button size="icon" variant="ghost" onClick={() => {
+                    const newProducts = (section.content.products || []).filter((_: any, i: number) => i !== index);
+                    const newContent = { ...section.content, products: newProducts };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    value={product.name || ''}
+                    onChange={(e) => {
+                      const newProducts = [...(section.content.products || [])];
+                      newProducts[index] = { ...product, name: e.target.value };
+                      const newContent = { ...section.content, products: newProducts };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Product name"
+                  />
+                  <Input
+                    value={product.category || ''}
+                    onChange={(e) => {
+                      const newProducts = [...(section.content.products || [])];
+                      newProducts[index] = { ...product, category: e.target.value };
+                      const newContent = { ...section.content, products: newProducts };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Category"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    value={product.price || ''}
+                    onChange={(e) => {
+                      const newProducts = [...(section.content.products || [])];
+                      newProducts[index] = { ...product, price: e.target.value };
+                      const newContent = { ...section.content, products: newProducts };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Price"
+                  />
+                  <Input
+                    value={product.icon || ''}
+                    onChange={(e) => {
+                      const newProducts = [...(section.content.products || [])];
+                      newProducts[index] = { ...product, icon: e.target.value };
+                      const newContent = { ...section.content, products: newProducts };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Icon name"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={product.image || ''}
+                    onChange={(e) => {
+                      const newProducts = [...(section.content.products || [])];
+                      newProducts[index] = { ...product, image: e.target.value };
+                      const newContent = { ...section.content, products: newProducts };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Image URL"
+                    className="flex-1"
+                  />
+                  <MediaPicker
+                    trigger={<Button variant="outline" size="sm">Pick/Upload</Button>}
+                    selectionMode="single"
+                    acceptedTypes={['image']}
+                    onSelect={(media: any) => {
+                      const url = media?.url;
+                      if (!url) return;
+                      const newProducts = [...(section.content.products || [])];
+                      newProducts[index] = { ...product, image: url };
+                      const newContent = { ...section.content, products: newProducts };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                  />
+                </div>
+                <Textarea
+                  value={product.description || ''}
+                  onChange={(e) => {
+                    const newProducts = [...(section.content.products || [])];
+                    newProducts[index] = { ...product, description: e.target.value };
+                    const newContent = { ...section.content, products: newProducts };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}
+                  placeholder="Product description"
+                  className="mt-2"
+                />
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Features (one per line)</label>
+                  <Textarea
+                    value={(product.features || []).join('\n')}
+                    onChange={(e) => {
+                      const features = e.target.value.split('\n').filter(f => f.trim());
+                      const newProducts = [...(section.content.products || [])];
+                      newProducts[index] = { ...product, features };
+                      const newContent = { ...section.content, products: newProducts };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Feature 1&#10;Feature 2"
+                    className="min-h-[60px] text-xs"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <Button 
+        onClick={() => saveSection(section.id, section.content)}
+        disabled={isSaving}
+      >
+        {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+        Save Operations Section
+      </Button>
+    </div>
+  );
+
+  const renderLivestockCategoriesEditor = (section: ContentSection) => (
+    <div className="space-y-4">
+      <div>
+        <label className="text-sm font-medium">Title</label>
+        <Input
+          value={section.content.title || ''}
+          onChange={(e) => {
+            const newContent = { ...section.content, title: e.target.value };
+            setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+          }}
+          placeholder="Section title"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium">Description</label>
+        <Textarea
+          value={section.content.description || ''}
+          onChange={(e) => {
+            const newContent = { ...section.content, description: e.target.value };
+            setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+          }}
+          placeholder="Description"
+          className="min-h-[100px]"
+        />
+      </div>
+      
+      {/* Categories Section */}
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-medium">Livestock Categories</label>
+          <Dialog modal={false} open={addCategoryOpenId === section.id} onOpenChange={(o) => setAddCategoryOpenId(o ? section.id : null)}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" onClick={() => setAddCategoryOpenId(section.id)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Add Category
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Add New Livestock Category</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input id="cat-name" placeholder="Category name (e.g. Beef Cattle)" />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input id="cat-image" placeholder="Image URL" className="flex-1" />
+                    <MediaPicker
+                      trigger={<Button variant="outline" size="sm">Pick/Upload</Button>}
+                      selectionMode="single"
+                      acceptedTypes={['image']}
+                      onSelect={(media: any) => {
+                        const url = media?.url;
+                        const input = document.getElementById('cat-image') as HTMLInputElement | null;
+                        if (input && url) input.value = url;
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Choose from library or upload</p>
+                </div>
+                <Textarea id="cat-desc" placeholder="Category description" />
+                <Input id="cat-specialty" placeholder="Specialty (e.g. Grass-Fed Beef)" />
+                <Input id="cat-icon" placeholder="Icon name (e.g. Home, Heart)" />
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Breeds (one per line)</label>
+                  <Textarea id="cat-breeds" placeholder="Angus&#10;Hereford&#10;Charolais" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Features (one per line)</label>
+                  <Textarea id="cat-features" placeholder="Grass-Fed&#10;Open Pasture&#10;USDA Certified" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={async () => {
+                  const name = (document.getElementById('cat-name') as HTMLInputElement)?.value?.trim() || '';
+                  const image = (document.getElementById('cat-image') as HTMLInputElement)?.value?.trim() || '';
+                  const description = (document.getElementById('cat-desc') as HTMLTextAreaElement)?.value?.trim() || '';
+                  const specialty = (document.getElementById('cat-specialty') as HTMLInputElement)?.value?.trim() || '';
+                  const icon = (document.getElementById('cat-icon') as HTMLInputElement)?.value?.trim() || 'Home';
+                  const breedsText = (document.getElementById('cat-breeds') as HTMLTextAreaElement)?.value?.trim() || '';
+                  const breeds = breedsText.split('\n').filter(b => b.trim());
+                  const featuresText = (document.getElementById('cat-features') as HTMLTextAreaElement)?.value?.trim() || '';
+                  const features = featuresText.split('\n').filter(f => f.trim());
+
+                  if (!name) {
+                    alert('Category name is required');
+                    return;
+                  }
+
+                  const newCategory = {
+                    name,
+                    image,
+                    description,
+                    specialty,
+                    icon,
+                    breeds,
+                    features
+                  };
+
+                  const nextCategories = Array.isArray(section.content.categories)
+                    ? [...section.content.categories, newCategory]
+                    : [newCategory];
+
+                  const cleanedCategories = nextCategories.filter((c: any) => c?.name?.trim());
+                  const newContent = { ...section.content, categories: cleanedCategories };
+
+                  setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+
+                  try {
+                    await saveSection(section.id, newContent);
+                    setAddCategoryOpenId(null);
+                    // Clear form
+                    ['cat-name', 'cat-image', 'cat-desc', 'cat-specialty', 'cat-icon', 'cat-breeds', 'cat-features'].forEach(id => {
+                      const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement;
+                      if (el) el.value = '';
+                    });
+                  } catch (e) {
+                    console.warn('Failed to persist new category immediately');
+                  }
+                }}>
+                  Save Category
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="space-y-3">
+          {(section.content.categories || []).filter((c: any) => c?.name?.trim()).map((category: any, index: number) => (
+            <Card key={index}>
+              <CardContent className="pt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-muted-foreground">Category {index + 1}</div>
+                  <Button size="icon" variant="ghost" onClick={() => {
+                    const newCategories = (section.content.categories || []).filter((_: any, i: number) => i !== index);
+                    const newContent = { ...section.content, categories: newCategories };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Input
+                  value={category.name || ''}
+                  onChange={(e) => {
+                    const newCategories = [...(section.content.categories || [])];
+                    newCategories[index] = { ...category, name: e.target.value };
+                    const newContent = { ...section.content, categories: newCategories };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}
+                  placeholder="Category name"
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    value={category.specialty || ''}
+                    onChange={(e) => {
+                      const newCategories = [...(section.content.categories || [])];
+                      newCategories[index] = { ...category, specialty: e.target.value };
+                      const newContent = { ...section.content, categories: newCategories };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Specialty"
+                  />
+                  <Input
+                    value={category.icon || ''}
+                    onChange={(e) => {
+                      const newCategories = [...(section.content.categories || [])];
+                      newCategories[index] = { ...category, icon: e.target.value };
+                      const newContent = { ...section.content, categories: newCategories };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Icon name"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={category.image || ''}
+                    onChange={(e) => {
+                      const newCategories = [...(section.content.categories || [])];
+                      newCategories[index] = { ...category, image: e.target.value };
+                      const newContent = { ...section.content, categories: newCategories };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Image URL"
+                    className="flex-1"
+                  />
+                  <MediaPicker
+                    trigger={<Button variant="outline" size="sm">Pick/Upload</Button>}
+                    selectionMode="single"
+                    acceptedTypes={['image']}
+                    onSelect={(media: any) => {
+                      const url = media?.url;
+                      if (!url) return;
+                      const newCategories = [...(section.content.categories || [])];
+                      newCategories[index] = { ...category, image: url };
+                      const newContent = { ...section.content, categories: newCategories };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                  />
+                </div>
+                <Textarea
+                  value={category.description || ''}
+                  onChange={(e) => {
+                    const newCategories = [...(section.content.categories || [])];
+                    newCategories[index] = { ...category, description: e.target.value };
+                    const newContent = { ...section.content, categories: newCategories };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}
+                  placeholder="Category description"
+                  className="mt-2"
+                />
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Breeds (one per line)</label>
+                  <Textarea
+                    value={(category.breeds || []).join('\n')}
+                    onChange={(e) => {
+                      const breeds = e.target.value.split('\n').filter(b => b.trim());
+                      const newCategories = [...(section.content.categories || [])];
+                      newCategories[index] = { ...category, breeds };
+                      const newContent = { ...section.content, categories: newCategories };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Breed 1&#10;Breed 2"
+                    className="min-h-[60px] text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Features (one per line)</label>
+                  <Textarea
+                    value={(category.features || []).join('\n')}
+                    onChange={(e) => {
+                      const features = e.target.value.split('\n').filter(f => f.trim());
+                      const newCategories = [...(section.content.categories || [])];
+                      newCategories[index] = { ...category, features };
+                      const newContent = { ...section.content, categories: newCategories };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Feature 1&#10;Feature 2"
+                    className="min-h-[60px] text-xs"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <Button 
+        onClick={() => saveSection(section.id, section.content)}
+        disabled={isSaving}
+      >
+        {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+        Save Categories Section
+      </Button>
+    </div>
+  );
+
+  const renderRegionalImpactEditor = (section: ContentSection) => (
+    <div className="space-y-4">
+      <div>
+        <label className="text-sm font-medium">Title</label>
+        <Input
+          value={section.content.title || ''}
+          onChange={(e) => {
+            const newContent = { ...section.content, title: e.target.value };
+            setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+          }}
+          placeholder="Section title"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium">Description</label>
+        <Textarea
+          value={section.content.description || ''}
+          onChange={(e) => {
+            const newContent = { ...section.content, description: e.target.value };
+            setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+          }}
+          placeholder="Description"
+          className="min-h-[100px]"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium">Food Security Title</label>
+          <Input
+            value={section.content.foodSecurityTitle || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, foodSecurityTitle: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Food Security Impact"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Processing Title</label>
+          <Input
+            value={section.content.processingTitle || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, processingTitle: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Local Processing Partnership"
+          />
+        </div>
+      </div>
+
+      {/* Food Security Points */}
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-medium">Food Security Points</label>
+          <Dialog modal={false} open={addFoodSecurityPointOpenId === section.id} onOpenChange={(o) => setAddFoodSecurityPointOpenId(o ? section.id : null)}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" onClick={() => setAddFoodSecurityPointOpenId(section.id)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Add Point
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Food Security Point</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input id="fs-title" placeholder="Point title (e.g. Local Supply Chain)" />
+                <Textarea id="fs-desc" placeholder="Point description" className="min-h-[100px]" />
+              </div>
+              <DialogFooter>
+                <Button onClick={async () => {
+                  const title = (document.getElementById('fs-title') as HTMLInputElement)?.value?.trim() || '';
+                  const description = (document.getElementById('fs-desc') as HTMLTextAreaElement)?.value?.trim() || '';
+
+                  if (!title || !description) {
+                    alert('Title and description are required');
+                    return;
+                  }
+
+                  const newPoint = { title, description };
+                  const nextPoints = Array.isArray(section.content.foodSecurityPoints)
+                    ? [...section.content.foodSecurityPoints, newPoint]
+                    : [newPoint];
+
+                  const newContent = { ...section.content, foodSecurityPoints: nextPoints };
+                  setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+
+                  try {
+                    await saveSection(section.id, newContent);
+                    setAddFoodSecurityPointOpenId(null);
+                    (document.getElementById('fs-title') as HTMLInputElement).value = '';
+                    (document.getElementById('fs-desc') as HTMLTextAreaElement).value = '';
+                  } catch (e) {
+                    console.warn('Failed to persist new point immediately');
+                  }
+                }}>
+                  Save Point
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="space-y-3">
+          {(section.content.foodSecurityPoints || []).map((point: any, index: number) => (
+            <Card key={index}>
+              <CardContent className="pt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-muted-foreground">Point {index + 1}</div>
+                  <Button size="icon" variant="ghost" onClick={() => {
+                    const newPoints = (section.content.foodSecurityPoints || []).filter((_: any, i: number) => i !== index);
+                    const newContent = { ...section.content, foodSecurityPoints: newPoints };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Input
+                  value={point.title || ''}
+                  onChange={(e) => {
+                    const newPoints = [...(section.content.foodSecurityPoints || [])];
+                    newPoints[index] = { ...point, title: e.target.value };
+                    const newContent = { ...section.content, foodSecurityPoints: newPoints };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}
+                  placeholder="Point title"
+                />
+                <Textarea
+                  value={point.description || ''}
+                  onChange={(e) => {
+                    const newPoints = [...(section.content.foodSecurityPoints || [])];
+                    newPoints[index] = { ...point, description: e.target.value };
+                    const newContent = { ...section.content, foodSecurityPoints: newPoints };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}
+                  placeholder="Point description"
+                  className="min-h-[80px]"
+                />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Processing Partnership Points */}
+      <div className="border-t pt-4">
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-sm font-medium">Processing Partnership Points</label>
+          <Dialog modal={false} open={addProcessingPointOpenId === section.id} onOpenChange={(o) => setAddProcessingPointOpenId(o ? section.id : null)}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" onClick={() => setAddProcessingPointOpenId(section.id)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Add Point
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Processing Partnership Point</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input id="pp-title" placeholder="Point title (e.g. Industry Support)" />
+                <Textarea id="pp-desc" placeholder="Point description" className="min-h-[100px]" />
+              </div>
+              <DialogFooter>
+                <Button onClick={async () => {
+                  const title = (document.getElementById('pp-title') as HTMLInputElement)?.value?.trim() || '';
+                  const description = (document.getElementById('pp-desc') as HTMLTextAreaElement)?.value?.trim() || '';
+
+                  if (!title || !description) {
+                    alert('Title and description are required');
+                    return;
+                  }
+
+                  const newPoint = { title, description };
+                  const nextPoints = Array.isArray(section.content.processingPartnershipPoints)
+                    ? [...section.content.processingPartnershipPoints, newPoint]
+                    : [newPoint];
+
+                  const newContent = { ...section.content, processingPartnershipPoints: nextPoints };
+                  setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+
+                  try {
+                    await saveSection(section.id, newContent);
+                    setAddProcessingPointOpenId(null);
+                    (document.getElementById('pp-title') as HTMLInputElement).value = '';
+                    (document.getElementById('pp-desc') as HTMLTextAreaElement).value = '';
+                  } catch (e) {
+                    console.warn('Failed to persist new point immediately');
+                  }
+                }}>
+                  Save Point
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="space-y-3">
+          {(section.content.processingPartnershipPoints || []).map((point: any, index: number) => (
+            <Card key={index}>
+              <CardContent className="pt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-muted-foreground">Point {index + 1}</div>
+                  <Button size="icon" variant="ghost" onClick={() => {
+                    const newPoints = (section.content.processingPartnershipPoints || []).filter((_: any, i: number) => i !== index);
+                    const newContent = { ...section.content, processingPartnershipPoints: newPoints };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Input
+                  value={point.title || ''}
+                  onChange={(e) => {
+                    const newPoints = [...(section.content.processingPartnershipPoints || [])];
+                    newPoints[index] = { ...point, title: e.target.value };
+                    const newContent = { ...section.content, processingPartnershipPoints: newPoints };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}
+                  placeholder="Point title"
+                />
+                <Textarea
+                  value={point.description || ''}
+                  onChange={(e) => {
+                    const newPoints = [...(section.content.processingPartnershipPoints || [])];
+                    newPoints[index] = { ...point, description: e.target.value };
+                    const newContent = { ...section.content, processingPartnershipPoints: newPoints };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                  }}
+                  placeholder="Point description"
+                  className="min-h-[80px]"
+                />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <Button 
+        onClick={() => saveSection(section.id, section.content)}
+        disabled={isSaving}
+      >
+        {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+        Save Regional Impact Section
+      </Button>
+    </div>
+  );
+
   const renderExchangeRatesEditor = (section: ContentSection) => {
     // Ensure content has the correct structure
     const content = {
@@ -836,11 +1688,27 @@ export default function BusinessContentPage() {
 
       {/* Content Editor */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className={`grid w-full ${business?.template === 'foreign-exchange' ? 'grid-cols-7' : 'grid-cols-6'}`}>
+        <TabsList className={`grid w-full ${
+          business?.template === 'foreign-exchange' ? 'grid-cols-7' : 
+          business?.template === 'livestock' ? 'grid-cols-9' : 
+          'grid-cols-6'
+        }`}>
           <TabsTrigger value="hero" className="flex items-center gap-2">
             <ImageIcon className="w-4 h-4" />
             Hero
           </TabsTrigger>
+          {business?.template === 'livestock' && (
+            <>
+              <TabsTrigger value="operations" className="flex items-center gap-2">
+                <Truck className="w-4 h-4" />
+                Operations
+              </TabsTrigger>
+              <TabsTrigger value="livestockCategories" className="flex items-center gap-2">
+                <Star className="w-4 h-4" />
+                Categories
+              </TabsTrigger>
+            </>
+          )}
           <TabsTrigger value="about" className="flex items-center gap-2">
             <User className="w-4 h-4" />
             About
@@ -853,6 +1721,12 @@ export default function BusinessContentPage() {
             <TabsTrigger value="exchangeRates" className="flex items-center gap-2">
               <DollarSign className="w-4 h-4" />
               Exchange Rates
+            </TabsTrigger>
+          )}
+          {business?.template === 'livestock' && (
+            <TabsTrigger value="regionalImpact" className="flex items-center gap-2">
+              <Globe className="w-4 h-4" />
+              Impact
             </TabsTrigger>
           )}
           <TabsTrigger value="gallery" className="flex items-center gap-2">
@@ -872,6 +1746,9 @@ export default function BusinessContentPage() {
         {sections.map((section) => {
           // Only render TabsContent for sections that should be visible
           if (section.type === "exchangeRates" && business?.template !== 'foreign-exchange') {
+            return null;
+          }
+          if ((section.type === "operations" || section.type === "livestockCategories" || section.type === "regionalImpact") && business?.template !== 'livestock') {
             return null;
           }
           
@@ -900,6 +1777,9 @@ export default function BusinessContentPage() {
                   {section.type === "exchangeRates" && renderExchangeRatesEditor(section)}
                   {section.type === "gallery" && renderGalleryEditor(section)}
                   {section.type === "contact" && renderContactEditor(section)}
+                  {section.type === "operations" && renderOperationsEditor(section)}
+                  {section.type === "livestockCategories" && renderLivestockCategoriesEditor(section)}
+                  {section.type === "regionalImpact" && renderRegionalImpactEditor(section)}
                   {section.type === "testimonials" && (
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
@@ -909,7 +1789,7 @@ export default function BusinessContentPage() {
                       </AlertDescription>
                     </Alert>
                   )}
-                  {!["hero", "about", "services", "exchangeRates", "gallery", "contact", "testimonials"].includes(section.type) && (
+                  {!["hero", "about", "services", "exchangeRates", "gallery", "contact", "testimonials", "operations", "livestockCategories", "regionalImpact"].includes(section.type) && (
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
