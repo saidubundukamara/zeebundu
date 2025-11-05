@@ -29,7 +29,11 @@ import {
   DollarSign,
   Truck,
   Package,
-  ArrowDown
+  ArrowDown,
+  ArrowRight,
+  FileText,
+  CreditCard,
+  Clock
 } from "lucide-react";
 import Link from "next/link";
 import { HeroEditor } from "@/components/admin/content-editors/HeroEditor";
@@ -40,7 +44,7 @@ import { MediaPicker } from "@/components/admin/MediaPicker";
 
 interface ContentSection {
   id: string;
-  type: 'hero' | 'about' | 'services' | 'gallery' | 'testimonials' | 'contact' | 'exchangeRates' | 'operations' | 'livestockCategories' | 'regionalImpact' | 'products' | 'process';
+  type: 'hero' | 'about' | 'services' | 'gallery' | 'testimonials' | 'contact' | 'exchangeRates' | 'operations' | 'livestockCategories' | 'regionalImpact' | 'products' | 'process' | 'borrowingProcess' | 'requirements' | 'loanDuration' | 'paymentMethods' | 'loanProducts' | 'terms';
   title: string;
   content: any;
   isActive: boolean;
@@ -107,6 +111,13 @@ export default function BusinessContentPage() {
   const [addWaterProductOpenId, setAddWaterProductOpenId] = useState<string | null>(null);
   const [addProcessStepOpenId, setAddProcessStepOpenId] = useState<string | null>(null);
   const [productSizes, setProductSizes] = useState<string[]>([]);
+  const [addRequirementOpenId, setAddRequirementOpenId] = useState<string | null>(null);
+  const [addLoanDurationOpenId, setAddLoanDurationOpenId] = useState<string | null>(null);
+  const [addPaymentMethodOpenId, setAddPaymentMethodOpenId] = useState<string | null>(null);
+  const [addLoanProductOpenId, setAddLoanProductOpenId] = useState<string | null>(null);
+  const [requirementDoc, setRequirementDoc] = useState<string>('');
+  const [paymentFeature, setPaymentFeature] = useState<string>('');
+  const [loanProductFeature, setLoanProductFeature] = useState<string>('');
 
   useEffect(() => {
     fetchBusinessContent();
@@ -201,6 +212,105 @@ export default function BusinessContentPage() {
                   exchangeRatesSection.content.description = "Competitive foreign exchange rates available at all our bureau locations.";
                 }
               }
+            }
+          }
+
+          // If this is a micro-finance template, ensure micro-finance-specific sections exist
+          if (businessData?.template === 'micro-finance' || businessData?.template === 'lending' || businessData?.template === 'microfinance') {
+            // Borrowing Process section
+            const borrowingProcessIndex = fetchedSections.findIndex((s: any) => s.type === 'borrowingProcess' || s.id === 'borrowingProcess');
+            if (borrowingProcessIndex === -1) {
+              fetchedSections.push({
+                id: "borrowingProcess",
+                type: "borrowingProcess",
+                title: "Borrowing Process",
+                isActive: true,
+                content: {
+                  title: "Simple Application Process",
+                  description: "Get your loan approved in just a few easy steps.",
+                  steps: []
+                }
+              });
+            }
+
+            // Requirements section
+            const requirementsIndex = fetchedSections.findIndex((s: any) => s.type === 'requirements' || s.id === 'requirements');
+            if (requirementsIndex === -1) {
+              fetchedSections.push({
+                id: "requirements",
+                type: "requirements",
+                title: "Requirements",
+                isActive: true,
+                content: {
+                  title: "Requirements to Meet Before Lending",
+                  description: "To ensure a smooth application process, please ensure you have the following documents and meet these requirements:",
+                  requirements: []
+                }
+              });
+            }
+
+            // Loan Duration section
+            const loanDurationIndex = fetchedSections.findIndex((s: any) => s.type === 'loanDuration' || s.id === 'loanDuration');
+            if (loanDurationIndex === -1) {
+              fetchedSections.push({
+                id: "loanDuration",
+                type: "loanDuration",
+                title: "Loan Duration",
+                isActive: true,
+                content: {
+                  title: "Flexible Loan Duration Options",
+                  description: "Choose the repayment period that best fits your financial situation.",
+                  options: []
+                }
+              });
+            }
+
+            // Payment Methods section
+            const paymentMethodsIndex = fetchedSections.findIndex((s: any) => s.type === 'paymentMethods' || s.id === 'paymentMethods');
+            if (paymentMethodsIndex === -1) {
+              fetchedSections.push({
+                id: "paymentMethods",
+                type: "paymentMethods",
+                title: "Payment Methods",
+                isActive: true,
+                content: {
+                  title: "Convenient Payment Methods",
+                  description: "We offer multiple flexible payment options.",
+                  methods: []
+                }
+              });
+            }
+
+            // Loan Products section
+            const loanProductsIndex = fetchedSections.findIndex((s: any) => s.type === 'loanProducts' || s.id === 'loanProducts');
+            if (loanProductsIndex === -1) {
+              fetchedSections.push({
+                id: "loanProducts",
+                type: "loanProducts",
+                title: "Loan Products",
+                isActive: true,
+                content: {
+                  title: "Our Loan Products",
+                  description: "We offer a variety of loan products designed to meet different needs.",
+                  products: []
+                }
+              });
+            }
+
+            // Terms section
+            const termsIndex = fetchedSections.findIndex((s: any) => s.type === 'terms' || s.id === 'terms');
+            if (termsIndex === -1) {
+              fetchedSections.push({
+                id: "terms",
+                type: "terms",
+                title: "Terms and Conditions",
+                isActive: true,
+                content: {
+                  title: "Terms and Conditions",
+                  description: "Please read and understand our terms and conditions before applying for a loan.",
+                  terms: []
+                }
+              });
             }
           }
 
@@ -2170,6 +2280,1182 @@ export default function BusinessContentPage() {
     );
   };
 
+  const renderBorrowingProcessEditor = (section: ContentSection) => {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Title</label>
+            <Input
+              value={section.content.title || ''}
+              onChange={(e) => {
+                const newContent = { ...section.content, title: e.target.value };
+                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+              }}
+              placeholder="Simple Application Process"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Description</label>
+          <Textarea
+            value={section.content.description || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, description: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Description"
+            className="min-h-[100px]"
+          />
+        </div>
+        
+        <div className="border-t pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium">Process Steps</label>
+            <Dialog modal={false} open={addProcessStepOpenId === section.id} onOpenChange={(o) => setAddProcessStepOpenId(o ? section.id : null)}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" onClick={() => setAddProcessStepOpenId(section.id)}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Step
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Add Process Step</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input id="borrow-step-number" placeholder="Step Number (e.g. 1, 2)" />
+                    <Input id="borrow-step-icon" placeholder="Icon (CheckCircle, FileText, Shield, DollarSign)" />
+                  </div>
+                  <Input id="borrow-step-title" placeholder="Step Title" />
+                  <Textarea id="borrow-step-desc" placeholder="Step description" />
+                </div>
+                <DialogFooter>
+                  <Button onClick={async () => {
+                    const number = (document.getElementById('borrow-step-number') as HTMLInputElement)?.value?.trim() || '';
+                    const icon = (document.getElementById('borrow-step-icon') as HTMLInputElement)?.value?.trim() || 'CheckCircle';
+                    const title = (document.getElementById('borrow-step-title') as HTMLInputElement)?.value?.trim() || '';
+                    const description = (document.getElementById('borrow-step-desc') as HTMLTextAreaElement)?.value?.trim() || '';
+
+                    if (!title) {
+                      alert('Step title is required');
+                      return;
+                    }
+
+                    const newStep = {
+                      number: number || String((section.content.steps || []).length + 1),
+                      icon,
+                      title,
+                      description
+                    };
+
+                    const nextSteps = Array.isArray(section.content.steps)
+                      ? [...section.content.steps, newStep]
+                      : [newStep];
+
+                    const newContent = { ...section.content, steps: nextSteps };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+
+                    try {
+                      await saveSection(section.id, newContent);
+                      setAddProcessStepOpenId(null);
+                      ['borrow-step-number', 'borrow-step-icon', 'borrow-step-title', 'borrow-step-desc'].forEach(id => {
+                        const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement;
+                        if (el) el.value = '';
+                      });
+                    } catch (e) {
+                      console.warn('Failed to persist new step immediately');
+                    }
+                  }}>
+                    Save Step
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <div className="space-y-3 mt-4">
+            {(section.content.steps || []).map((step: any, index: number) => (
+              <Card key={index}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-muted-foreground">Step {index + 1}</div>
+                    <Button size="icon" variant="ghost" onClick={() => {
+                      const newSteps = (section.content.steps || []).filter((_: any, i: number) => i !== index);
+                      const newContent = { ...section.content, steps: newSteps };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      value={step.number || ''}
+                      onChange={(e) => {
+                        const newSteps = [...(section.content.steps || [])];
+                        newSteps[index] = { ...step, number: e.target.value };
+                        const newContent = { ...section.content, steps: newSteps };
+                        setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                      }}
+                      placeholder="1"
+                    />
+                    <Input
+                      value={step.icon || ''}
+                      onChange={(e) => {
+                        const newSteps = [...(section.content.steps || [])];
+                        newSteps[index] = { ...step, icon: e.target.value };
+                        const newContent = { ...section.content, steps: newSteps };
+                        setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                      }}
+                      placeholder="Icon"
+                    />
+                  </div>
+                  <Input
+                    value={step.title || ''}
+                    onChange={(e) => {
+                      const newSteps = [...(section.content.steps || [])];
+                      newSteps[index] = { ...step, title: e.target.value };
+                      const newContent = { ...section.content, steps: newSteps };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Step Title"
+                  />
+                  <Textarea
+                    value={step.description || ''}
+                    onChange={(e) => {
+                      const newSteps = [...(section.content.steps || [])];
+                      newSteps[index] = { ...step, description: e.target.value };
+                      const newContent = { ...section.content, steps: newSteps };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Description"
+                    className="min-h-[80px]"
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <Button 
+          onClick={() => saveSection(section.id, section.content)}
+          disabled={isSaving}
+        >
+          {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+          Save Borrowing Process Section
+        </Button>
+      </div>
+    );
+  };
+
+  const renderRequirementsEditor = (section: ContentSection) => {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Title</label>
+            <Input
+              value={section.content.title || ''}
+              onChange={(e) => {
+                const newContent = { ...section.content, title: e.target.value };
+                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+              }}
+              placeholder="Requirements to Meet Before Lending"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Description</label>
+          <Textarea
+            value={section.content.description || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, description: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Description"
+            className="min-h-[100px]"
+          />
+        </div>
+        
+        <div className="border-t pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium">Requirements</label>
+            <Dialog modal={false} open={addRequirementOpenId === section.id} onOpenChange={(o) => setAddRequirementOpenId(o ? section.id : null)}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" onClick={() => setAddRequirementOpenId(section.id)}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Requirement
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Add Requirement</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <Input id="req-title" placeholder="Requirement Title" />
+                  <Textarea id="req-desc" placeholder="Description" />
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="req-required" defaultChecked />
+                    <label htmlFor="req-required" className="text-sm">Required</label>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Documents (one per line)</label>
+                    <Textarea id="req-docs" placeholder="Valid National ID&#10;Bank statements&#10;Proof of income" className="min-h-[100px]" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={async () => {
+                    const title = (document.getElementById('req-title') as HTMLInputElement)?.value?.trim() || '';
+                    const description = (document.getElementById('req-desc') as HTMLTextAreaElement)?.value?.trim() || '';
+                    const required = (document.getElementById('req-required') as HTMLInputElement)?.checked;
+                    const docsText = (document.getElementById('req-docs') as HTMLTextAreaElement)?.value?.trim() || '';
+                    const documents = docsText.split('\n').filter(d => d.trim()).map(d => d.trim());
+
+                    if (!title) {
+                      alert('Requirement title is required');
+                      return;
+                    }
+
+                    const newRequirement = {
+                      title,
+                      description,
+                      required,
+                      documents
+                    };
+
+                    const nextRequirements = Array.isArray(section.content.requirements)
+                      ? [...section.content.requirements, newRequirement]
+                      : [newRequirement];
+
+                    const newContent = { ...section.content, requirements: nextRequirements };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+
+                    try {
+                      await saveSection(section.id, newContent);
+                      setAddRequirementOpenId(null);
+                      ['req-title', 'req-desc', 'req-docs'].forEach(id => {
+                        const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement;
+                        if (el) el.value = '';
+                      });
+                    } catch (e) {
+                      console.warn('Failed to persist new requirement immediately');
+                    }
+                  }}>
+                    Save Requirement
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <div className="space-y-3 mt-4">
+            {(section.content.requirements || []).map((req: any, index: number) => (
+              <Card key={index}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-muted-foreground">Requirement {index + 1}</div>
+                    <Button size="icon" variant="ghost" onClick={() => {
+                      const newRequirements = (section.content.requirements || []).filter((_: any, i: number) => i !== index);
+                      const newContent = { ...section.content, requirements: newRequirements };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    value={req.title || ''}
+                    onChange={(e) => {
+                      const newRequirements = [...(section.content.requirements || [])];
+                      newRequirements[index] = { ...req, title: e.target.value };
+                      const newContent = { ...section.content, requirements: newRequirements };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Requirement Title"
+                  />
+                  <Textarea
+                    value={req.description || ''}
+                    onChange={(e) => {
+                      const newRequirements = [...(section.content.requirements || [])];
+                      newRequirements[index] = { ...req, description: e.target.value };
+                      const newContent = { ...section.content, requirements: newRequirements };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Description"
+                    className="min-h-[80px]"
+                  />
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      checked={req.required !== false}
+                      onChange={(e) => {
+                        const newRequirements = [...(section.content.requirements || [])];
+                        newRequirements[index] = { ...req, required: e.target.checked };
+                        const newContent = { ...section.content, requirements: newRequirements };
+                        setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                      }}
+                    />
+                    <label className="text-sm">Required</label>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Documents</label>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          id={`req-doc-input-${index}`}
+                          placeholder="Document name"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const docInput = e.target as HTMLInputElement;
+                              const doc = docInput?.value?.trim();
+                              if (doc) {
+                                const newRequirements = [...(section.content.requirements || [])];
+                                const currentDocs = Array.isArray(newRequirements[index].documents) ? newRequirements[index].documents : [];
+                                newRequirements[index] = { ...req, documents: [...currentDocs, doc] };
+                                const newContent = { ...section.content, requirements: newRequirements };
+                                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                                docInput.value = '';
+                              }
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const docInput = document.getElementById(`req-doc-input-${index}`) as HTMLInputElement;
+                            const doc = docInput?.value?.trim();
+                            if (doc) {
+                              const newRequirements = [...(section.content.requirements || [])];
+                              const currentDocs = Array.isArray(newRequirements[index].documents) ? newRequirements[index].documents : [];
+                              newRequirements[index] = { ...req, documents: [...currentDocs, doc] };
+                              const newContent = { ...section.content, requirements: newRequirements };
+                              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                              docInput.value = '';
+                            }
+                          }}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {(Array.isArray(req.documents) ? req.documents : []).map((doc: string, docIndex: number) => (
+                          <div key={docIndex} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                            <span>{doc}</span>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-red-500 hover:text-red-700"
+                              onClick={() => {
+                                const newRequirements = [...(section.content.requirements || [])];
+                                const currentDocs = Array.isArray(newRequirements[index].documents) ? newRequirements[index].documents : [];
+                                currentDocs.splice(docIndex, 1);
+                                newRequirements[index] = { ...req, documents: currentDocs };
+                                const newContent = { ...section.content, requirements: newRequirements };
+                                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <Button 
+          onClick={() => saveSection(section.id, section.content)}
+          disabled={isSaving}
+        >
+          {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+          Save Requirements Section
+        </Button>
+      </div>
+    );
+  };
+
+  const renderLoanDurationEditor = (section: ContentSection) => {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Title</label>
+            <Input
+              value={section.content.title || ''}
+              onChange={(e) => {
+                const newContent = { ...section.content, title: e.target.value };
+                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+              }}
+              placeholder="Flexible Loan Duration Options"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Description</label>
+          <Textarea
+            value={section.content.description || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, description: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Description"
+            className="min-h-[100px]"
+          />
+        </div>
+        
+        <div className="border-t pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium">Loan Duration Options</label>
+            <Dialog modal={false} open={addLoanDurationOpenId === section.id} onOpenChange={(o) => setAddLoanDurationOpenId(o ? section.id : null)}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" onClick={() => setAddLoanDurationOpenId(section.id)}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Duration Option
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Add Loan Duration Option</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <Input id="duration-period" placeholder="Duration (e.g. 3 Months, 6 Months)" />
+                  <Textarea id="duration-desc" placeholder="Description" />
+                  <div className="grid grid-cols-3 gap-3">
+                    <Input id="duration-interest" placeholder="Interest Rate (e.g. 5% per month)" />
+                    <Input id="duration-min" placeholder="Min Amount (e.g. $500)" />
+                    <Input id="duration-max" placeholder="Max Amount (e.g. $5,000)" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={async () => {
+                    const duration = (document.getElementById('duration-period') as HTMLInputElement)?.value?.trim() || '';
+                    const description = (document.getElementById('duration-desc') as HTMLTextAreaElement)?.value?.trim() || '';
+                    const interestRate = (document.getElementById('duration-interest') as HTMLInputElement)?.value?.trim() || '';
+                    const minAmount = (document.getElementById('duration-min') as HTMLInputElement)?.value?.trim() || '';
+                    const maxAmount = (document.getElementById('duration-max') as HTMLInputElement)?.value?.trim() || '';
+
+                    if (!duration) {
+                      alert('Duration is required');
+                      return;
+                    }
+
+                    const newOption = {
+                      duration,
+                      description,
+                      interestRate,
+                      minAmount,
+                      maxAmount
+                    };
+
+                    const nextOptions = Array.isArray(section.content.options)
+                      ? [...section.content.options, newOption]
+                      : [newOption];
+
+                    const newContent = { ...section.content, options: nextOptions };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+
+                    try {
+                      await saveSection(section.id, newContent);
+                      setAddLoanDurationOpenId(null);
+                      ['duration-period', 'duration-desc', 'duration-interest', 'duration-min', 'duration-max'].forEach(id => {
+                        const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement;
+                        if (el) el.value = '';
+                      });
+                    } catch (e) {
+                      console.warn('Failed to persist new option immediately');
+                    }
+                  }}>
+                    Save Option
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <div className="space-y-3 mt-4">
+            {(section.content.options || []).map((option: any, index: number) => (
+              <Card key={index}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-muted-foreground">Option {index + 1}</div>
+                    <Button size="icon" variant="ghost" onClick={() => {
+                      const newOptions = (section.content.options || []).filter((_: any, i: number) => i !== index);
+                      const newContent = { ...section.content, options: newOptions };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    value={option.duration || ''}
+                    onChange={(e) => {
+                      const newOptions = [...(section.content.options || [])];
+                      newOptions[index] = { ...option, duration: e.target.value };
+                      const newContent = { ...section.content, options: newOptions };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Duration"
+                  />
+                  <Textarea
+                    value={option.description || ''}
+                    onChange={(e) => {
+                      const newOptions = [...(section.content.options || [])];
+                      newOptions[index] = { ...option, description: e.target.value };
+                      const newContent = { ...section.content, options: newOptions };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Description"
+                    className="min-h-[80px]"
+                  />
+                  <div className="grid grid-cols-3 gap-2">
+                    <Input
+                      value={option.interestRate || ''}
+                      onChange={(e) => {
+                        const newOptions = [...(section.content.options || [])];
+                        newOptions[index] = { ...option, interestRate: e.target.value };
+                        const newContent = { ...section.content, options: newOptions };
+                        setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                      }}
+                      placeholder="Interest Rate"
+                    />
+                    <Input
+                      value={option.minAmount || ''}
+                      onChange={(e) => {
+                        const newOptions = [...(section.content.options || [])];
+                        newOptions[index] = { ...option, minAmount: e.target.value };
+                        const newContent = { ...section.content, options: newOptions };
+                        setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                      }}
+                      placeholder="Min Amount"
+                    />
+                    <Input
+                      value={option.maxAmount || ''}
+                      onChange={(e) => {
+                        const newOptions = [...(section.content.options || [])];
+                        newOptions[index] = { ...option, maxAmount: e.target.value };
+                        const newContent = { ...section.content, options: newOptions };
+                        setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                      }}
+                      placeholder="Max Amount"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <Button 
+          onClick={() => saveSection(section.id, section.content)}
+          disabled={isSaving}
+        >
+          {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+          Save Loan Duration Section
+        </Button>
+      </div>
+    );
+  };
+
+  const renderPaymentMethodsEditor = (section: ContentSection) => {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Title</label>
+            <Input
+              value={section.content.title || ''}
+              onChange={(e) => {
+                const newContent = { ...section.content, title: e.target.value };
+                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+              }}
+              placeholder="Convenient Payment Methods"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Description</label>
+          <Textarea
+            value={section.content.description || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, description: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Description"
+            className="min-h-[100px]"
+          />
+        </div>
+        
+        <div className="border-t pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium">Payment Methods</label>
+            <Dialog modal={false} open={addPaymentMethodOpenId === section.id} onOpenChange={(o) => setAddPaymentMethodOpenId(o ? section.id : null)}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" onClick={() => setAddPaymentMethodOpenId(section.id)}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Payment Method
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Add Payment Method</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input id="payment-name" placeholder="Method Name" />
+                    <Input id="payment-icon" placeholder="Icon (CreditCard, Clock, DollarSign)" />
+                  </div>
+                  <Textarea id="payment-desc" placeholder="Description" />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Features (one per line)</label>
+                    <Textarea id="payment-features" placeholder="Online banking&#10;Mobile banking&#10;24/7 availability" className="min-h-[100px]" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={async () => {
+                    const name = (document.getElementById('payment-name') as HTMLInputElement)?.value?.trim() || '';
+                    const icon = (document.getElementById('payment-icon') as HTMLInputElement)?.value?.trim() || 'CreditCard';
+                    const description = (document.getElementById('payment-desc') as HTMLTextAreaElement)?.value?.trim() || '';
+                    const featuresText = (document.getElementById('payment-features') as HTMLTextAreaElement)?.value?.trim() || '';
+                    const features = featuresText.split('\n').filter(f => f.trim()).map(f => f.trim());
+
+                    if (!name) {
+                      alert('Payment method name is required');
+                      return;
+                    }
+
+                    const newMethod = {
+                      name,
+                      icon,
+                      description,
+                      features
+                    };
+
+                    const nextMethods = Array.isArray(section.content.methods)
+                      ? [...section.content.methods, newMethod]
+                      : [newMethod];
+
+                    const newContent = { ...section.content, methods: nextMethods };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+
+                    try {
+                      await saveSection(section.id, newContent);
+                      setAddPaymentMethodOpenId(null);
+                      ['payment-name', 'payment-icon', 'payment-desc', 'payment-features'].forEach(id => {
+                        const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement;
+                        if (el) el.value = '';
+                      });
+                    } catch (e) {
+                      console.warn('Failed to persist new method immediately');
+                    }
+                  }}>
+                    Save Method
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <div className="space-y-3 mt-4">
+            {(section.content.methods || []).map((method: any, index: number) => (
+              <Card key={index}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-muted-foreground">Method {index + 1}</div>
+                    <Button size="icon" variant="ghost" onClick={() => {
+                      const newMethods = (section.content.methods || []).filter((_: any, i: number) => i !== index);
+                      const newContent = { ...section.content, methods: newMethods };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      value={method.name || ''}
+                      onChange={(e) => {
+                        const newMethods = [...(section.content.methods || [])];
+                        newMethods[index] = { ...method, name: e.target.value };
+                        const newContent = { ...section.content, methods: newMethods };
+                        setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                      }}
+                      placeholder="Method Name"
+                    />
+                    <Input
+                      value={method.icon || ''}
+                      onChange={(e) => {
+                        const newMethods = [...(section.content.methods || [])];
+                        newMethods[index] = { ...method, icon: e.target.value };
+                        const newContent = { ...section.content, methods: newMethods };
+                        setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                      }}
+                      placeholder="Icon"
+                    />
+                  </div>
+                  <Textarea
+                    value={method.description || ''}
+                    onChange={(e) => {
+                      const newMethods = [...(section.content.methods || [])];
+                      newMethods[index] = { ...method, description: e.target.value };
+                      const newContent = { ...section.content, methods: newMethods };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Description"
+                    className="min-h-[80px]"
+                  />
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Features</label>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          id={`payment-feature-input-${index}`}
+                          placeholder="Feature name"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const featureInput = e.target as HTMLInputElement;
+                              const feature = featureInput?.value?.trim();
+                              if (feature) {
+                                const newMethods = [...(section.content.methods || [])];
+                                const currentFeatures = Array.isArray(newMethods[index].features) ? newMethods[index].features : [];
+                                newMethods[index] = { ...method, features: [...currentFeatures, feature] };
+                                const newContent = { ...section.content, methods: newMethods };
+                                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                                featureInput.value = '';
+                              }
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const featureInput = document.getElementById(`payment-feature-input-${index}`) as HTMLInputElement;
+                            const feature = featureInput?.value?.trim();
+                            if (feature) {
+                              const newMethods = [...(section.content.methods || [])];
+                              const currentFeatures = Array.isArray(newMethods[index].features) ? newMethods[index].features : [];
+                              newMethods[index] = { ...method, features: [...currentFeatures, feature] };
+                              const newContent = { ...section.content, methods: newMethods };
+                              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                              featureInput.value = '';
+                            }
+                          }}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {(Array.isArray(method.features) ? method.features : []).map((feature: string, featureIndex: number) => (
+                          <div key={featureIndex} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                            <span>{feature}</span>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-red-500 hover:text-red-700"
+                              onClick={() => {
+                                const newMethods = [...(section.content.methods || [])];
+                                const currentFeatures = Array.isArray(newMethods[index].features) ? newMethods[index].features : [];
+                                currentFeatures.splice(featureIndex, 1);
+                                newMethods[index] = { ...method, features: currentFeatures };
+                                const newContent = { ...section.content, methods: newMethods };
+                                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <Button 
+          onClick={() => saveSection(section.id, section.content)}
+          disabled={isSaving}
+        >
+          {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+          Save Payment Methods Section
+        </Button>
+      </div>
+    );
+  };
+
+  const renderLoanProductsEditor = (section: ContentSection) => {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Title</label>
+            <Input
+              value={section.content.title || ''}
+              onChange={(e) => {
+                const newContent = { ...section.content, title: e.target.value };
+                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+              }}
+              placeholder="Our Loan Products"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Description</label>
+          <Textarea
+            value={section.content.description || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, description: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Description"
+            className="min-h-[100px]"
+          />
+        </div>
+        
+        <div className="border-t pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium">Loan Products</label>
+            <Dialog modal={false} open={addLoanProductOpenId === section.id} onOpenChange={(o) => setAddLoanProductOpenId(o ? section.id : null)}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" onClick={() => setAddLoanProductOpenId(section.id)}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Loan Product
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Add Loan Product</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <Input id="loan-product-name" placeholder="Product Name" />
+                  <Textarea id="loan-product-desc" placeholder="Description" />
+                  <div className="grid grid-cols-3 gap-3">
+                    <Input id="loan-product-interest" placeholder="Interest Rate" />
+                    <Input id="loan-product-min" placeholder="Min Amount" />
+                    <Input id="loan-product-max" placeholder="Max Amount" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Features (one per line)</label>
+                    <Textarea id="loan-product-features" placeholder="No collateral required&#10;Quick approval&#10;Flexible repayment" className="min-h-[100px]" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={async () => {
+                    const name = (document.getElementById('loan-product-name') as HTMLInputElement)?.value?.trim() || '';
+                    const description = (document.getElementById('loan-product-desc') as HTMLTextAreaElement)?.value?.trim() || '';
+                    const interestRate = (document.getElementById('loan-product-interest') as HTMLInputElement)?.value?.trim() || '';
+                    const minAmount = (document.getElementById('loan-product-min') as HTMLInputElement)?.value?.trim() || '';
+                    const maxAmount = (document.getElementById('loan-product-max') as HTMLInputElement)?.value?.trim() || '';
+                    const featuresText = (document.getElementById('loan-product-features') as HTMLTextAreaElement)?.value?.trim() || '';
+                    const features = featuresText.split('\n').filter(f => f.trim()).map(f => f.trim());
+
+                    if (!name) {
+                      alert('Product name is required');
+                      return;
+                    }
+
+                    const newProduct = {
+                      name,
+                      description,
+                      interestRate,
+                      minAmount,
+                      maxAmount,
+                      features
+                    };
+
+                    const nextProducts = Array.isArray(section.content.products)
+                      ? [...section.content.products, newProduct]
+                      : [newProduct];
+
+                    const newContent = { ...section.content, products: nextProducts };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+
+                    try {
+                      await saveSection(section.id, newContent);
+                      setAddLoanProductOpenId(null);
+                      ['loan-product-name', 'loan-product-desc', 'loan-product-interest', 'loan-product-min', 'loan-product-max', 'loan-product-features'].forEach(id => {
+                        const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement;
+                        if (el) el.value = '';
+                      });
+                    } catch (e) {
+                      console.warn('Failed to persist new product immediately');
+                    }
+                  }}>
+                    Save Product
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <div className="space-y-3 mt-4">
+            {(section.content.products || []).map((product: any, index: number) => (
+              <Card key={index}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-muted-foreground">Product {index + 1}</div>
+                    <Button size="icon" variant="ghost" onClick={() => {
+                      const newProducts = (section.content.products || []).filter((_: any, i: number) => i !== index);
+                      const newContent = { ...section.content, products: newProducts };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    value={product.name || ''}
+                    onChange={(e) => {
+                      const newProducts = [...(section.content.products || [])];
+                      newProducts[index] = { ...product, name: e.target.value };
+                      const newContent = { ...section.content, products: newProducts };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Product Name"
+                  />
+                  <Textarea
+                    value={product.description || ''}
+                    onChange={(e) => {
+                      const newProducts = [...(section.content.products || [])];
+                      newProducts[index] = { ...product, description: e.target.value };
+                      const newContent = { ...section.content, products: newProducts };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}
+                    placeholder="Description"
+                    className="min-h-[80px]"
+                  />
+                  <div className="grid grid-cols-3 gap-2">
+                    <Input
+                      value={product.interestRate || ''}
+                      onChange={(e) => {
+                        const newProducts = [...(section.content.products || [])];
+                        newProducts[index] = { ...product, interestRate: e.target.value };
+                        const newContent = { ...section.content, products: newProducts };
+                        setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                      }}
+                      placeholder="Interest Rate"
+                    />
+                    <Input
+                      value={product.minAmount || ''}
+                      onChange={(e) => {
+                        const newProducts = [...(section.content.products || [])];
+                        newProducts[index] = { ...product, minAmount: e.target.value };
+                        const newContent = { ...section.content, products: newProducts };
+                        setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                      }}
+                      placeholder="Min Amount"
+                    />
+                    <Input
+                      value={product.maxAmount || ''}
+                      onChange={(e) => {
+                        const newProducts = [...(section.content.products || [])];
+                        newProducts[index] = { ...product, maxAmount: e.target.value };
+                        const newContent = { ...section.content, products: newProducts };
+                        setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                      }}
+                      placeholder="Max Amount"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Features</label>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          id={`loan-product-feature-input-${index}`}
+                          placeholder="Feature name"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const featureInput = e.target as HTMLInputElement;
+                              const feature = featureInput?.value?.trim();
+                              if (feature) {
+                                const newProducts = [...(section.content.products || [])];
+                                const currentFeatures = Array.isArray(newProducts[index].features) ? newProducts[index].features : [];
+                                newProducts[index] = { ...product, features: [...currentFeatures, feature] };
+                                const newContent = { ...section.content, products: newProducts };
+                                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                                featureInput.value = '';
+                              }
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const featureInput = document.getElementById(`loan-product-feature-input-${index}`) as HTMLInputElement;
+                            const feature = featureInput?.value?.trim();
+                            if (feature) {
+                              const newProducts = [...(section.content.products || [])];
+                              const currentFeatures = Array.isArray(newProducts[index].features) ? newProducts[index].features : [];
+                              newProducts[index] = { ...product, features: [...currentFeatures, feature] };
+                              const newContent = { ...section.content, products: newProducts };
+                              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                              featureInput.value = '';
+                            }
+                          }}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {(Array.isArray(product.features) ? product.features : []).map((feature: string, featureIndex: number) => (
+                          <div key={featureIndex} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                            <span>{feature}</span>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-red-500 hover:text-red-700"
+                              onClick={() => {
+                                const newProducts = [...(section.content.products || [])];
+                                const currentFeatures = Array.isArray(newProducts[index].features) ? newProducts[index].features : [];
+                                currentFeatures.splice(featureIndex, 1);
+                                newProducts[index] = { ...product, features: currentFeatures };
+                                const newContent = { ...section.content, products: newProducts };
+                                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <Button 
+          onClick={() => saveSection(section.id, section.content)}
+          disabled={isSaving}
+        >
+          {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+          Save Loan Products Section
+        </Button>
+      </div>
+    );
+  };
+
+  const renderTermsEditor = (section: ContentSection) => {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium">Title</label>
+            <Input
+              value={section.content.title || ''}
+              onChange={(e) => {
+                const newContent = { ...section.content, title: e.target.value };
+                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+              }}
+              placeholder="Terms and Conditions"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Description</label>
+          <Textarea
+            value={section.content.description || ''}
+            onChange={(e) => {
+              const newContent = { ...section.content, description: e.target.value };
+              setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+            }}
+            placeholder="Description"
+            className="min-h-[100px]"
+          />
+        </div>
+        
+        <div className="border-t pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium">Terms</label>
+            <Button size="sm" variant="outline" onClick={() => {
+              const termInput = document.getElementById('term-input') as HTMLInputElement;
+              const term = termInput?.value?.trim();
+              if (term) {
+                const nextTerms = Array.isArray(section.content.terms)
+                  ? [...section.content.terms, term]
+                  : [term];
+                const newContent = { ...section.content, terms: nextTerms };
+                setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                termInput.value = '';
+              }
+            }}>
+              <Plus className="w-4 h-4 mr-1" />
+              Add Term
+            </Button>
+          </div>
+          <div className="space-y-2 mb-4">
+            <Input
+              id="term-input"
+              placeholder="Enter a term or condition"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const termInput = e.target as HTMLInputElement;
+                  const term = termInput?.value?.trim();
+                  if (term) {
+                    const nextTerms = Array.isArray(section.content.terms)
+                      ? [...section.content.terms, term]
+                      : [term];
+                    const newContent = { ...section.content, terms: nextTerms };
+                    setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    termInput.value = '';
+                  }
+                }
+              }}
+            />
+          </div>
+          <div className="space-y-3 mt-4">
+            {(section.content.terms || []).map((term: any, index: number) => (
+              <Card key={index}>
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      {typeof term === 'string' ? (
+                        <p className="text-sm">{term}</p>
+                      ) : (
+                        <>
+                          {term.title && <h4 className="font-medium mb-1">{term.title}</h4>}
+                          <p className="text-sm text-muted-foreground">{term.description || term.text}</p>
+                        </>
+                      )}
+                    </div>
+                    <Button size="icon" variant="ghost" onClick={() => {
+                      const newTerms = (section.content.terms || []).filter((_: any, i: number) => i !== index);
+                      const newContent = { ...section.content, terms: newTerms };
+                      setSections(prev => prev.map(s => s.id === section.id ? { ...s, content: newContent } : s));
+                    }}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <Button 
+          onClick={() => saveSection(section.id, section.content)}
+          disabled={isSaving}
+        >
+          {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+          Save Terms Section
+        </Button>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -2252,11 +3538,12 @@ export default function BusinessContentPage() {
       )}
 
       {/* Content Editor */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className={`grid w-full ${
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className={`grid w-full gap-x-2 gap-y-3 ${
           business?.template === 'foreign-exchange' ? 'grid-cols-7' : 
           business?.template === 'livestock' ? 'grid-cols-9' : 
           business?.template === 'water-production' ? 'grid-cols-8' :
+          (business?.template === 'micro-finance' || business?.template === 'lending' || business?.template === 'microfinance') ? 'grid-cols-9' :
           'grid-cols-6'
         }`}>
           <TabsTrigger value="hero" className="flex items-center gap-2">
@@ -2307,6 +3594,34 @@ export default function BusinessContentPage() {
               Impact
             </TabsTrigger>
           )}
+          {(business?.template === 'micro-finance' || business?.template === 'lending' || business?.template === 'microfinance') && (
+            <>
+              <TabsTrigger value="borrowingProcess" className="flex items-center gap-2 leading-relaxed">
+                <ArrowRight className="w-4 h-4" />
+                Borrowing Process
+              </TabsTrigger>
+              <TabsTrigger value="requirements" className="flex items-center gap-2 leading-relaxed">
+                <FileText className="w-4 h-4" />
+                Requirements
+              </TabsTrigger>
+              <TabsTrigger value="loanDuration" className="flex items-center gap-2 leading-relaxed">
+                <Clock className="w-4 h-4" />
+                Loan Duration
+              </TabsTrigger>
+              <TabsTrigger value="paymentMethods" className="flex items-center gap-2 leading-relaxed">
+                <CreditCard className="w-4 h-4" />
+                Payment Methods
+              </TabsTrigger>
+              <TabsTrigger value="loanProducts" className="flex items-center gap-2 leading-relaxed">
+                <DollarSign className="w-4 h-4" />
+                Loan Products
+              </TabsTrigger>
+              <TabsTrigger value="terms" className="flex items-center gap-2 leading-relaxed">
+                <FileText className="w-4 h-4" />
+                Terms
+              </TabsTrigger>
+            </>
+          )}
           <TabsTrigger value="gallery" className="flex items-center gap-2">
             <ImageIcon className="w-4 h-4" />
             Gallery
@@ -2332,20 +3647,23 @@ export default function BusinessContentPage() {
           if ((section.type === "products" || section.type === "process") && business?.template !== 'water-production') {
             return null;
           }
+          if ((section.type === "borrowingProcess" || section.type === "requirements" || section.type === "loanDuration" || section.type === "paymentMethods" || section.type === "loanProducts" || section.type === "terms") && business?.template !== 'micro-finance' && business?.template !== 'lending' && business?.template !== 'microfinance') {
+            return null;
+          }
           
           return (
-            <TabsContent key={section.id} value={section.type}>
-              <Card>
+            <TabsContent key={section.id} value={section.type} className="mt-12">
+              <Card className="mt-4">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 leading-relaxed">
                         {section.title}
                         <Badge variant={section.isActive ? "default" : "secondary"}>
                           {section.isActive ? "Active" : "Inactive"}
                         </Badge>
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="mt-2">
                         Customize the {section.type} section content
                       </CardDescription>
                     </div>
@@ -2363,6 +3681,12 @@ export default function BusinessContentPage() {
                   {section.type === "regionalImpact" && renderRegionalImpactEditor(section)}
                   {section.type === "products" && renderProductsEditor(section)}
                   {section.type === "process" && renderProcessEditor(section)}
+                  {section.type === "borrowingProcess" && renderBorrowingProcessEditor(section)}
+                  {section.type === "requirements" && renderRequirementsEditor(section)}
+                  {section.type === "loanDuration" && renderLoanDurationEditor(section)}
+                  {section.type === "paymentMethods" && renderPaymentMethodsEditor(section)}
+                  {section.type === "loanProducts" && renderLoanProductsEditor(section)}
+                  {section.type === "terms" && renderTermsEditor(section)}
                   {section.type === "testimonials" && (
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
@@ -2372,7 +3696,7 @@ export default function BusinessContentPage() {
                       </AlertDescription>
                     </Alert>
                   )}
-                  {!["hero", "about", "services", "exchangeRates", "gallery", "products", "process", "contact", "testimonials", "operations", "livestockCategories", "regionalImpact"].includes(section.type) && (
+                  {!["hero", "about", "services", "exchangeRates", "gallery", "products", "process", "contact", "testimonials", "operations", "livestockCategories", "regionalImpact", "borrowingProcess", "requirements", "loanDuration", "paymentMethods", "loanProducts", "terms"].includes(section.type) && (
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>

@@ -14,6 +14,7 @@ import { ForeignExchangTemplate } from '@/components/business-templates/ForeignE
 import { LivestockTemplate } from '@/components/business-templates/LivestockTemplate';
 import { SalonTemplate } from '@/components/business-templates/SalonTemplate';
 import { WaterProductionTemplate } from '@/components/business-templates/WaterProductionTemplate';
+import { MicroFinanceTemplate } from '@/components/business-templates/MicroFinanceTemplate';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -99,6 +100,9 @@ function getTemplateComponent(templateName: string) {
     'foreign-exchange': ForeignExchangTemplate,
     'salon': SalonTemplate,
     'water-production': WaterProductionTemplate,
+    'micro-finance': MicroFinanceTemplate,
+    'lending': MicroFinanceTemplate,
+    'microfinance': MicroFinanceTemplate,
   };
   
   return templates[templateName as keyof typeof templates];

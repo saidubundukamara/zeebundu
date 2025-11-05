@@ -152,7 +152,10 @@ export default function BusinessesPage() {
       "food": "Food & Beverage",
       "retail": "Retail",
       "automotive": "Automotive",
-      "real-estate": "Real Estate"
+      "real-estate": "Real Estate",
+      "micro-finance": "Micro-Finance & Lending",
+      "lending": "Micro-Finance & Lending",
+      "microfinance": "Micro-Finance & Lending"
     };
     return templates[template] || template.charAt(0).toUpperCase() + template.slice(1).replace('-', ' ');
   };
