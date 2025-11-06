@@ -63,6 +63,18 @@ function getBusinessGradient(template: string, industry: string): string {
   return gradientMap[template] || gradientMap[industry.toLowerCase().replace(' ', '-')] || 'from-blue-500 to-cyan-500';
 }
 
+// Helper function to get icon color class based on gradient
+function getIconColorClass(gradient: string): string {
+  if (gradient.includes('blue')) return 'text-blue-600';
+  if (gradient.includes('emerald') || gradient.includes('teal')) return 'text-emerald-600';
+  if (gradient.includes('green')) return 'text-green-600';
+  if (gradient.includes('red') || gradient.includes('pink')) return 'text-red-600';
+  if (gradient.includes('purple') || gradient.includes('indigo')) return 'text-purple-600';
+  if (gradient.includes('orange') || gradient.includes('amber')) return 'text-orange-600';
+  if (gradient.includes('slate')) return 'text-slate-600';
+  return 'text-blue-600';
+}
+
 // Helper function to get border color based on template/industry  
 function getBusinessBorderColor(template: string, industry: string): string {
   const borderColorMap: Record<string, string> = {
@@ -92,7 +104,7 @@ function getBusinessBackgroundImage(template: string, industry: string): string 
     'hotel-resort': 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     'farming': 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     'agriculture': 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    'pharmacy': 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    'pharmacy': 'https://images.squarespace-cdn.com/content/v1/5efa0fe78713d718e5a23e0d/1607942729498-WN51MEZMIPW4R5NEWCFI/pharma-1600-px.jpg',
     'healthcare': 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     'retail': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     'automotive': 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
@@ -208,9 +220,23 @@ export default function HomePage() {
             </div>
           </div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight">
-            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 bg-clip-text text-transparent">
-              ZeeBundu
+          <h1 className="mb-8 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light leading-tight">
+            <span className="text-white">Welcome to</span>{" "}
+            <span className="inline-block relative">
+              <span 
+                className="font-bold text-transparent bg-clip-text bg-gradient-to-r animate-pulse"
+                style={{
+                  backgroundImage: 'linear-gradient(to right, #E07A5F, #81B29A, #E07A5F)'
+                }}
+              >
+                Zeebundu
+              </span>
+              <div 
+                className="absolute left-0 right-0 -bottom-2 h-1 rounded-full"
+                style={{
+                  background: 'linear-gradient(to right, #E07A5F, #81B29A)'
+                }}
+              ></div>
             </span>
           </h1>
 
@@ -323,67 +349,114 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Bento Grid */}
+          {/* Business Cards Masonry */}
           {!loading && !error && businesses.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            {businesses.map((business, index) => (
-              <Link
-                key={business.id}
-                href={business.path}
-                className={`
-                  group relative overflow-hidden rounded-2xl border ${business.borderColor} backdrop-blur-xl
-                  transition-all duration-500 transform hover:scale-105 hover:shadow-2xl
-                  ${business.size === 'large' ? 'md:col-span-2 md:row-span-2' : ''}
-                  ${business.size === 'tall' ? 'md:row-span-2' : ''}
-                  ${visibleSections.has('businesses') 
-                    ? 'opacity-100 translate-y-0' 
-                    : 'opacity-0 translate-y-8'
-                  }
-                `}
-                style={{ transitionDelay: `${index * 100}ms` }}
-              >
-                {/* Background Image */}
-                <div className="absolute inset-0">
-                  <img
-                    src={business.backgroundImage}
-                    alt={business.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className={`absolute inset-0 bg-gradient-to-br ${business.gradient} opacity-80 group-hover:opacity-90 transition-opacity duration-300`}></div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                </div>
+            <div className="max-w-7xl mx-auto relative">
+              {/* Decorative Background Elements */}
+              <div className="absolute -top-20 -left-20 w-96 h-96 bg-blue-100/30 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-purple-100/30 rounded-full blur-3xl pointer-events-none"></div>
+              
+              <div className="columns-1 md:columns-2 lg:columns-3 gap-8 relative z-10">
+                {businesses.map((business, index) => {
+                  // Varied image heights for visual interest
+                  const imageHeight = index % 3 === 0 ? 'h-72' : index % 3 === 1 ? 'h-64' : 'h-80';
+                  
+                  return (
+                    <Link
+                      key={business.id}
+                      href={business.path}
+                      className={`
+                        group relative bg-white rounded-3xl shadow-xl overflow-hidden mb-8
+                        break-inside-avoid inline-block w-full
+                        transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 hover:scale-[1.02]
+                        border border-gray-100/50
+                        ${visibleSections.has('businesses') 
+                          ? 'opacity-100 translate-y-0' 
+                          : 'opacity-0 translate-y-8'
+                        }
+                      `}
+                      style={{ 
+                        transitionDelay: `${index * 50}ms`,
+                        transform: visibleSections.has('businesses') ? 'translateY(0)' : 'translateY(32px)'
+                      }}
+                    >
+                      {/* Decorative Corner */}
+                      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${business.gradient} opacity-5 group-hover:opacity-10 transition-opacity duration-500 rounded-bl-full`}></div>
+                      
+                      {/* Image Container */}
+                      <div className={`relative ${imageHeight} overflow-hidden`}>
+                        {/* Subtle Pattern Overlay */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                          <div className="absolute inset-0" style={{
+                            backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0)`,
+                            backgroundSize: '24px 24px'
+                          }}></div>
+                        </div>
+                        
+                        <img
+                          src={business.backgroundImage}
+                          alt={business.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className={`absolute inset-0 bg-gradient-to-t ${business.gradient} opacity-50 group-hover:opacity-60 transition-opacity duration-500`}></div>
+                        
+                        {/* Shine Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                        
+                        {/* Icon Badge */}
+                        <div className="absolute top-4 left-4 transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
+                          <div className="p-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-white/50 group-hover:shadow-2xl">
+                            <div className={getIconColorClass(business.gradient)}>
+                              {business.icon}
+                            </div>
+                          </div>
+                        </div>
 
-                {/* Content */}
-                <div className={`relative z-10 p-6 h-full flex flex-col justify-between ${business.size === 'large' ? 'md:p-8' : ''}`}>
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30">
-                        {business.icon}
+                        {/* Industry Badge */}
+                        <div className="absolute top-4 right-4 transform transition-all duration-500 group-hover:scale-105">
+                          <span className="px-3 py-1.5 text-xs font-semibold text-white bg-black/50 backdrop-blur-sm rounded-full border border-white/30 shadow-lg">
+                            {business.industry}
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium text-white/80 bg-white/10 px-3 py-1 rounded-full">
-                        {business.industry}
-                      </span>
-                    </div>
-                    
-                    <h3 className={`font-bold text-white mb-3 ${business.size === 'large' ? 'text-2xl md:text-3xl' : 'text-xl'}`}>
-                      {business.title}
-                    </h3>
-                    
-                    <p className={`text-white/80 leading-relaxed ${business.size === 'large' ? 'text-lg' : 'text-sm'}`}>
-                      {business.description}
-                    </p>
-                  </div>
 
-                  <div className="flex items-center gap-2 text-white font-semibold group-hover:gap-3 transition-all duration-300">
-                    <span>Explore</span>
-                    <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" />
-                  </div>
-                </div>
+                      {/* Content */}
+                      <div className="p-6 relative">
+                        {/* Decorative Dot Pattern */}
+                        <div className="absolute top-0 left-6 w-1 h-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        
+                        <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-300 relative">
+                          {business.title}
+                          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 group-hover:w-full transition-all duration-500"></span>
+                        </h3>
+                        
+                        <p className="text-gray-600 leading-relaxed mb-6 text-sm">
+                          {business.description}
+                        </p>
 
-                {/* Hover Effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-              </Link>
-            ))}
+                        {/* CTA Button */}
+                        <div className="flex items-center gap-2 text-blue-600 font-semibold group-hover:gap-3 transition-all duration-300">
+                          <span className="relative">
+                            Explore Business
+                            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
+                          </span>
+                          <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" />
+                        </div>
+                      </div>
+
+                      {/* Gradient Accent Line */}
+                      <div className={`absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-r ${business.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+                      
+                      {/* Floating Particles Effect on Hover */}
+                      <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/40 rounded-full animate-pulse"></div>
+                        <div className="absolute top-1/2 right-1/4 w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+                        <div className="absolute bottom-1/4 left-1/2 w-1 h-1 bg-white/40 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -407,7 +480,8 @@ export default function HomePage() {
         data-section="about"
       >
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="max-w-[80vw] mx-auto">
+            <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div 
               className={`transition-all duration-700 delay-200 ${
                 visibleSections.has('about') 
@@ -466,6 +540,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent rounded-2xl"></div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </section>

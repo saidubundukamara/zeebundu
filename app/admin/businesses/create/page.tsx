@@ -42,6 +42,7 @@ const templates = [
   { value: "restaurant", label: "Restaurant", category: "food-service" },
   { value: "pharmacy", label: "Pharmacy", category: "healthcare" },
   { value: "farming", label: "Farm", category: "agriculture" },
+  { value: "micro-finance", label: "Micro-Finance & Lending", category: "financial-services" },
 ];
 
 const industries = [
@@ -52,6 +53,7 @@ const industries = [
   { value: "agriculture", label: "Agriculture" },
   { value: "retail", label: "Retail" },
   { value: "professional-services", label: "Professional Services" },
+  { value: "financial-services", label: "Financial Services" },
 ];
 
 export default function CreateBusinessPage() {

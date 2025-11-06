@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   MapPin,
   Dog,
@@ -22,6 +22,7 @@ import {
   Egg,
   Beef,
   Factory,
+  LucideIcon,
 } from "lucide-react";
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
@@ -33,6 +34,24 @@ interface LivestockPageProps {
   template: BusinessTemplate;
   preview?: boolean;
 }
+
+// Icon mapping for service/product icons
+const iconMap: Record<string, LucideIcon> = {
+  Home,
+  Heart,
+  Shield,
+  Truck,
+  Award,
+  Users,
+  Egg,
+  Beef,
+  Star,
+  Factory,
+  TreePine,
+  Clock,
+  Phone,
+  Mail,
+};
 
 export function LivestockTemplate({ business, content, template, preview = false }: LivestockPageProps) {
   const [visibleSections, setVisibleSections] = useState(new Set());
@@ -56,197 +75,150 @@ export function LivestockTemplate({ business, content, template, preview = false
     return () => observer.disconnect();
   }, []);
 
-  const poultryProducts = [
-    {
-      name: "Premium Free-Range Eggs",
-      category: "Fresh Eggs",
-      image:
-        "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400",
-      description:
-        "Farm-fresh eggs from pasture-raised chickens with access to open fields",
-      price: "$8/dozen",
-      features: ["Omega-3 Rich", "Cage-Free", "Organic Feed"],
-      icon: Egg,
-    },
-    {
-      name: "Organic Chicken Meat",
-      category: "Poultry Meat",
-      image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400",
-      description:
-        "High-quality chicken meat from birds raised with sustainable practices",
-      price: "$12/lb",
-      features: ["Antibiotic-Free", "Hormone-Free", "Free-Range"],
-      icon: Heart,
-    },
-    {
-      name: "Turkey & Specialty Birds",
-      category: "Specialty Poultry",
-      image:
-        "https://images.unsplash.com/photo-1574781330855-d0db2706b3d0?w=400",
-      description:
-        "Premium turkey and specialty poultry for restaurants and retailers",
-      price: "$15/lb",
-      features: ["Heritage Breeds", "Seasonal", "Custom Orders"],
-      icon: Star,
-    },
-  ];
+  // Extract content sections from database - NO FALLBACKS
+  const heroContent = content?.hero || (content?.sections && content.sections.find((s: any) => s.type === 'hero')?.content);
+  const operationsContent = content?.operations || (content?.sections && content.sections.find((s: any) => s.type === 'operations')?.content);
+  const livestockCategoriesContent = content?.livestockCategories || (content?.sections && content.sections.find((s: any) => s.type === 'livestockCategories')?.content);
+  const servicesContent = content?.services || (content?.sections && content.sections.find((s: any) => s.type === 'services')?.content);
+  const regionalImpactContent = content?.regionalImpact || (content?.sections && content.sections.find((s: any) => s.type === 'regionalImpact')?.content);
+  const contactContent = content?.contact || (content?.sections && content.sections.find((s: any) => s.type === 'contact')?.content);
 
-  const cattleProducts = [
-    {
-      name: "Premium Beef Cuts",
-      category: "Beef Products",
-      image:
-        "https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=400",
-      description:
-        "High-quality beef from grass-fed cattle supporting regional food security",
-      price: "$18/lb",
-      features: ["Grass-Fed", "Local Processing", "Premium Cuts"],
-      icon: Beef,
-    },
-    {
-      name: "Fresh Dairy Products",
-      category: "Dairy",
-      image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400",
-      description:
-        "Farm-fresh milk and dairy products from our healthy cattle herd",
-      price: "$6/gallon",
-      features: ["Raw Milk Available", "Hormone-Free", "Daily Fresh"],
-      icon: Heart,
-    },
-    {
-      name: "Breeding Stock",
-      category: "Livestock",
-      image:
-        "https://agtech.folio3.com/wp-content/uploads/2023/04/livestock-breeding.png",
-      description: "Quality breeding cattle for expanding livestock operations",
-      price: "Contact for pricing",
-      features: ["Registered Stock", "Health Certified", "Genetic Testing"],
-      icon: Award,
-    },
-  ];
+  // Extract hero data - NO FALLBACKS
+  const hasHeroContent = heroContent?.title || heroContent?.description;
+  const heroTitle = heroContent?.title;
+  const heroSubtitle = heroContent?.subtitle;
+  const heroDescription = heroContent?.description;
+  const heroBadge = heroContent?.badge || heroContent?.badges?.[0];
+  const heroBackgroundImage = heroContent?.backgroundImage?.url || heroContent?.backgroundImage;
+  const heroButtons = heroContent?.ctaButtons || heroContent?.buttons || [];
+  const heroStats = useMemo(() => {
+    if (heroContent?.stats && Array.isArray(heroContent.stats) && heroContent.stats.length > 0) {
+      return heroContent.stats.map((s: any) => {
+        const iconName = s.icon || s.iconName || 'Award';
+        const IconComponent = typeof iconName === 'string' 
+          ? (iconMap[iconName] || Award)
+          : (iconName || Award);
+        return {
+          icon: IconComponent,
+          title: s.title || '',
+          description: s.description || '',
+          value: s.value || s.number || '',
+        };
+      });
+    }
+    return [];
+  }, [heroContent]);
 
-  const livestockCategories = [
-    {
-      name: "Beef Cattle",
-      icon: Home,
-      image:
-        "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400",
-      description:
-        "Premium beef cattle raised with sustainable farming practices for exceptional meat quality and taste",
-      breeds: ["Angus", "Hereford", "Charolais", "Simmental"],
-      specialty: "Grass-Fed Beef",
-      features: ["Grass-Fed", "Open Pasture", "USDA Certified"],
-    },
-    {
-      name: "Dairy Cattle",
-      icon: Heart,
-      image:
-        "https://www.allaboutfeed.net/app/uploads/2020/12/001_723_IMG_shutterstock_web.jpg",
-      description:
-        "High-quality dairy cattle focused on milk production with superior animal welfare standards",
-      breeds: ["Holstein", "Jersey", "Guernsey", "Brown Swiss"],
-      specialty: "Fresh Dairy",
-      features: ["Hormone-Free", "Daily Milking", "Quality Tested"],
-    },
-  ];
+  // Extract cattle products from operations - NO FALLBACKS
+  const cattleProducts = useMemo(() => {
+    if (operationsContent?.products && Array.isArray(operationsContent.products) && operationsContent.products.length > 0) {
+      return operationsContent.products.map((p: any) => {
+        const iconName = p.icon || p.iconName || 'Beef';
+        const IconComponent = typeof iconName === 'string' 
+          ? (iconMap[iconName] || Beef)
+          : (iconName || Beef);
+        return {
+          icon: IconComponent,
+          name: p.name || p.title || '',
+          category: p.category || '',
+          image: p.image?.url || p.image || '',
+          description: p.description || '',
+          price: p.price || '',
+          features: Array.isArray(p.features) ? p.features : [],
+        };
+      });
+    }
+    return [];
+  }, [operationsContent]);
 
-  const ranchServices = [
-    {
-      title: "Beef Production",
-      icon: Heart,
-      description:
-        "Premium beef cattle farming supporting regional food security and local meat processing industries",
-      features: [
-        "Grass-Fed Cattle",
-        "Quality Genetics",
-        "Sustainable Practices",
-      ],
-    },
-    {
-      title: "Dairy Production",
-      icon: Shield,
-      description:
-        "High-quality dairy farming operations contributing to regional food security and local dairy processing",
-      features: ["Fresh Daily Milk", "Hormone-Free", "Quality Standards"],
-    },
-    {
-      title: "Regional Food Security",
-      icon: TreePine,
-      description:
-        "Supporting local communities with reliable livestock production for sustained food supply",
-      features: ["Local Supply Chain", "Community Partnership", "Food Safety"],
-    },
-    {
-      title: "Meat Processing Support",
-      icon: Truck,
-      description:
-        "Contributing to local meat processing industries with consistent, high-quality livestock supply",
-      features: [
-        "Industry Partnership",
-        "Quality Assurance",
-        "Timely Delivery",
-      ],
-    },
-  ];
+  // Extract operations info - NO FALLBACKS
+  const hasOperations = operationsContent?.title || cattleProducts.length > 0;
+  const operationsTitle = operationsContent?.title;
+  const operationsDescription = operationsContent?.description;
+  const operationsSubtitle = operationsContent?.subtitle;
+  const operationsStats = operationsContent?.stats || [];
 
-  const ranchStats = [
-    {
-      icon: Award,
-      title: "Premium Quality",
-      description: "Carefully selected livestock for superior products",
-      value: "Grade A",
-    },
-    {
-      icon: Heart,
-      title: "Animal Care",
-      description: "Ethical and humane livestock management",
-      value: "Priority",
-    },
-    {
-      icon: Shield,
-      title: "Fresh Products",
-      description: "Farm-to-table freshness guaranteed",
-      value: "Daily",
-    },
-    {
-      icon: Users,
-      title: "Local Business",
-      description: "Supporting the community with quality livestock",
-      value: "Trusted",
-    },
-  ];
+  // Extract livestock categories - NO FALLBACKS
+  const livestockCategories = useMemo(() => {
+    if (livestockCategoriesContent?.categories && Array.isArray(livestockCategoriesContent.categories) && livestockCategoriesContent.categories.length > 0) {
+      return livestockCategoriesContent.categories.map((c: any) => {
+        const iconName = c.icon || c.iconName || 'Home';
+        const IconComponent = typeof iconName === 'string' 
+          ? (iconMap[iconName] || Home)
+          : (iconName || Home);
+        return {
+          icon: IconComponent,
+          name: c.name || c.title || '',
+          image: c.image?.url || c.image || '',
+          description: c.description || '',
+          breeds: Array.isArray(c.breeds) ? c.breeds : [],
+          specialty: c.specialty || '',
+          features: Array.isArray(c.features) ? c.features : [],
+        };
+      });
+    }
+    return [];
+  }, [livestockCategoriesContent]);
 
-  // Function to get updated high-quality images for livestock categories
-  const getUpdatedImage = (categoryName: string) => {
-    const imageMap: { [key: string]: string } = {
-      "Beef Cattle":
-        "https://www.americandairy.com/wp-content/uploads/2024/11/Jersey-1.png",
-      "Dairy Cattle":
-        "https://www.allaboutfeed.net/app/uploads/2020/12/001_723_IMG_shutterstock_web.jpg",
-      Sheep:
-        "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800&h=600&fit=crop&crop=center",
-      Poultry:
-        "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=800&h=600&fit=crop&crop=center",
-    };
-    return (
-      imageMap[categoryName] ||
-      "https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=800&h=600&fit=crop&crop=center"
-    );
-  };
+  const hasLivestockCategories = livestockCategories.length > 0;
+  const livestockCategoriesTitle = livestockCategoriesContent?.title;
+  const livestockCategoriesDescription = livestockCategoriesContent?.description;
+
+  // Extract services - NO FALLBACKS
+  const services = useMemo(() => {
+    if (servicesContent?.services && Array.isArray(servicesContent.services) && servicesContent.services.length > 0) {
+      return servicesContent.services.map((s: any) => {
+        const iconName = s.icon || s.iconName || 'Heart';
+        const IconComponent = typeof iconName === 'string' 
+          ? (iconMap[iconName] || Heart)
+          : (iconName || Heart);
+        return {
+          icon: IconComponent,
+          title: s.title || s.name || '',
+          description: s.description || '',
+          features: Array.isArray(s.features) ? s.features : [],
+        };
+      });
+    }
+    return [];
+  }, [servicesContent]);
+
+  const hasServices = services.length > 0;
+  const servicesTitle = servicesContent?.title;
+  const servicesDescription = servicesContent?.description;
+
+  // Extract regional impact - NO FALLBACKS
+  const hasRegionalImpact = regionalImpactContent?.title || regionalImpactContent?.description;
+  const regionalImpactTitle = regionalImpactContent?.title;
+  const regionalImpactDescription = regionalImpactContent?.description;
+  const foodSecurityPoints = regionalImpactContent?.foodSecurityPoints || [];
+  const processingPartnershipPoints = regionalImpactContent?.processingPartnershipPoints || [];
+  const impactStats = regionalImpactContent?.stats || [];
+
+  // Extract contact data - NO FALLBACKS
+  const hasContactContent = contactContent?.phone || contactContent?.email || business?.contact?.phone || business?.contact?.email;
+  const contactPhone = contactContent?.phone || business?.contact?.phone;
+  const contactEmail = contactContent?.email || business?.contact?.email;
+  const contactHours = contactContent?.hours || contactContent?.businessHours;
+  const contactTitle = contactContent?.title;
+  const contactDescription = contactContent?.description;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
       <Navigation theme="light" bgColor="bg-white" />
 
-      {/* Modern Ranch Hero Section */}
+      {/* Modern Ranch Hero Section - Only render if data exists */}
+      {hasHeroContent && (
       <section className="flex overflow-hidden relative justify-center items-center min-h-screen">
         {/* Background Image */}
         <div className="absolute inset-0">
+          {heroBackgroundImage && (
           <img
-            src="https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=1920&h=1080&fit=crop"
+              src={heroBackgroundImage}
             alt="Ranch landscape"
             className="object-cover w-full h-full"
           />
+          )}
           <div className="absolute inset-0 bg-gradient-to-r to-transparent from-black/60 via-black/40"></div>
         </div>
 
@@ -255,41 +227,55 @@ export function LivestockTemplate({ business, content, template, preview = false
           <div className="grid gap-12 items-center lg:grid-cols-2">
             {/* Left Content */}
             <div className="text-white max-sm:pt-24">
+              {heroBadge && (
               <div className="inline-flex items-center px-4 py-2 mb-6 rounded-full backdrop-blur-sm bg-white/10">
                 <Home className="mr-2" size={20} />
                 <span className="text-sm font-medium">
-                  Premium Livestock Ranch
+                    {heroBadge}
                 </span>
               </div>
+              )}
 
+              {heroTitle && (
               <h1 className="mb-6 text-5xl font-bold leading-tight md:text-7xl">
-                Cattle
-                <span className="block text-red-500">Farm</span>
+                  {heroTitle}
+                  {heroSubtitle && (
+                    <span className="block text-red-500">{heroSubtitle}</span>
+                  )}
               </h1>
+              )}
 
+              {heroDescription && (
               <p className="mb-8 text-xl leading-relaxed text-gray-200">
-                Three generations of sustainable livestock farming. We raise
-                premium cattle, dairy cows, sheep, and poultry with the highest
-                standards of animal welfare.
+                  {heroDescription}
               </p>
+              )}
 
+              {heroButtons.length > 0 && (
               <div className="flex flex-col gap-4 sm:flex-row">
-                <a href="#contact" className="inline-block">
-                  <button className="px-8 py-4 font-semibold text-white bg-red-600 rounded-xl transition-all duration-300 hover:bg-red-700 hover:scale-105">
-                    Schedule Ranch Tour
+                  {heroButtons.map((button: any, index: number) => (
+                    <a 
+                      key={index}
+                      href={button.link || button.href || '#'} 
+                      className="inline-block"
+                    >
+                      <button className={`px-8 py-4 font-semibold text-white rounded-xl transition-all duration-300 hover:scale-105 ${
+                        button.style === 'secondary' || index > 0
+                          ? 'border backdrop-blur-sm bg-white/10 hover:bg-white/20 border-white/30'
+                          : 'bg-red-600 hover:bg-red-700'
+                      }`}>
+                        {button.text || button.label || 'Learn More'}
                   </button>
                 </a>
-                <a href="#livestock" className="inline-block">
-                  <button className="px-8 py-4 font-semibold text-white rounded-xl border backdrop-blur-sm transition-all duration-300 bg-white/10 hover:bg-white/20 border-white/30">
-                    View Our Animals
-                  </button>
-                </a>
+                  ))}
               </div>
+              )}
             </div>
 
-            {/* Right Stats */}
+            {/* Right Stats - Only render if stats exist */}
+            {heroStats.length > 0 && (
             <div className="grid grid-cols-2 gap-6 max-sm:pb-8">
-              {ranchStats.map((stat, index) => {
+                {heroStats.map((stat: any, index: number) => {
                 const IconComponent = stat.icon;
                 return (
                   <div
@@ -297,22 +283,31 @@ export function LivestockTemplate({ business, content, template, preview = false
                     className="p-6 text-white rounded-2xl backdrop-blur-sm transition-all duration-300 bg-white/10 hover:bg-white/20"
                   >
                     <IconComponent className="mb-4 text-red-500" size={32} />
+                      {stat.value && (
                     <div className="mb-2 text-3xl font-bold">{stat.value}</div>
+                      )}
+                      {stat.title && (
                     <div className="mb-1 text-lg font-semibold">
                       {stat.title}
                     </div>
+                      )}
+                      {stat.description && (
                     <div className="text-sm text-gray-300">
                       {stat.description}
                     </div>
+                      )}
                   </div>
                 );
               })}
             </div>
+            )}
           </div>
         </div>
       </section>
+      )}
 
-      {/* Farm Operations Section */}
+      {/* Farm Operations Section - Only render if data exists */}
+      {hasOperations && (
       <section id="operations" data-section className="py-24 bg-white">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           {/* Header Section */}
@@ -321,25 +316,29 @@ export function LivestockTemplate({ business, content, template, preview = false
               <Shield className="mr-2 w-4 h-4" />
               Premium Farm Operations
             </div>
+            {operationsTitle && (
             <h2 className="mb-6 text-5xl font-bold leading-tight text-gray-900 md:text-6xl">
-              Sustainable <span className="text-red-500">Livestock</span>
-              <br />
-              Excellence
+                {operationsTitle}
+                {operationsSubtitle && (
+                  <span className="block text-red-500">{operationsSubtitle}</span>
+                )}
             </h2>
+            )}
+            {operationsDescription && (
             <p className="mx-auto max-w-4xl text-xl leading-relaxed text-gray-600">
-              Livestock farming for beef and dairy production, supporting
-              regional food security and contributing to local meat processing
-              industries.
+                {operationsDescription}
             </p>
+            )}
           </div>
 
           {/* Asymmetric Layout for Farm Operations */}
+          {cattleProducts.length > 0 && (
           <div className="space-y-32">
             {/* Cattle Farming Section - Right Aligned */}
             <div className="grid gap-16 items-center lg:grid-cols-12">
               <div className="order-2 lg:col-span-7 lg:order-1">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  {cattleProducts.slice(0, 3).map((product, index) => {
+                    {cattleProducts.slice(0, 3).map((product: any, index: number) => {
                     const IconComponent = product.icon;
                     return (
                       <div
@@ -348,31 +347,41 @@ export function LivestockTemplate({ business, content, template, preview = false
                           index === 2 ? "md:col-span-2 h-64" : "h-48"
                         }`}
                       >
+                          {product.image && (
                         <img
                           src={product.image}
                           alt={product.name}
                           className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
                         />
+                          )}
                         <div className="absolute inset-0 bg-gradient-to-t to-transparent from-black/70 via-black/20"></div>
                         <div className="absolute right-0 bottom-0 left-0 p-6">
                           <div className="flex justify-between items-center mb-2">
+                              {product.name && (
                             <h4 className="text-lg font-bold text-white">
                               {product.name}
                             </h4>
+                              )}
                             <div className="p-2 rounded-full backdrop-blur-sm bg-white/20">
                               <IconComponent className="w-4 h-4 text-white" />
                             </div>
                           </div>
+                            {product.description && (
                           <p className="text-sm text-white/90">
                             {product.description.slice(0, 80)}...
                           </p>
+                            )}
                           <div className="flex justify-between items-center mt-3">
+                              {product.price && (
                             <span className="font-bold text-red-300">
                               {product.price}
                             </span>
+                              )}
+                              {product.category && (
                             <span className="px-3 py-1 text-xs font-medium text-white bg-red-500 rounded-full">
                               {product.category}
                             </span>
+                              )}
                           </div>
                         </div>
                       </div>
@@ -391,41 +400,38 @@ export function LivestockTemplate({ business, content, template, preview = false
                       </div>
                       <div>
                         <h3 className="text-3xl font-bold text-gray-900">
-                          Cattle Farm
+                            {operationsContent?.farmName || 'Cattle Farm'}
                         </h3>
                         <p className="font-medium text-red-600">
-                          Premium Beef & Dairy
+                            {operationsContent?.farmType || 'Premium Beef & Dairy'}
                         </p>
                       </div>
                     </div>
 
+                      {operationsDescription && (
                     <p className="mb-8 text-lg leading-relaxed text-gray-600">
-                      Our livestock farming operations focus on beef and dairy
-                      production, supporting regional food security and
-                      contributing to local meat processing industries with
-                      sustainable practices and quality standards.
+                          {operationsDescription}
                     </p>
+                      )}
 
+                      {operationsStats.length > 0 && (
                     <div className="grid grid-cols-2 gap-4 mb-8">
-                      <div className="p-4 text-center bg-red-50 rounded-xl">
+                          {operationsStats.map((stat: any, index: number) => (
+                            <div key={index} className="p-4 text-center bg-red-50 rounded-xl">
                         <div className="text-2xl font-bold text-red-600">
-                          200+
+                                {stat.value || stat.number || ''}
                         </div>
                         <div className="text-sm text-gray-600">
-                          Head of Cattle
+                                {stat.label || stat.title || ''}
                         </div>
                       </div>
-                      <div className="p-4 text-center bg-rose-50 rounded-xl">
-                        <div className="text-2xl font-bold text-rose-600">
-                          100%
+                          ))}
                         </div>
-                        <div className="text-sm text-gray-600">Grass Fed</div>
-                      </div>
-                    </div>
+                      )}
 
                     <a href="#contact" className="inline-block w-full">
                       <button className="px-6 py-4 w-full font-semibold text-white bg-gradient-to-r from-red-500 to-rose-500 rounded-xl shadow-lg transition-all duration-300 transform hover:from-red-600 hover:to-rose-600 hover:scale-105">
-                        Explore Cattle Products
+                          {operationsContent?.ctaText || 'Explore Cattle Products'}
                       </button>
                     </a>
                   </div>
@@ -433,10 +439,13 @@ export function LivestockTemplate({ business, content, template, preview = false
               </div>
             </div>
           </div>
+          )}
         </div>
       </section>
+      )}
 
-      {/* Livestock Categories Section */}
+      {/* Livestock Categories Section - Only render if data exists */}
+      {hasLivestockCategories && (
       <section id="livestock" data-section className="py-24 bg-white">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           {/* Header Section */}
@@ -445,20 +454,21 @@ export function LivestockTemplate({ business, content, template, preview = false
               <Shield className="mr-2 w-4 h-4" />
               Premium Livestock Collection
             </div>
+            {livestockCategoriesTitle && (
             <h2 className="mb-6 text-5xl font-bold leading-tight text-gray-900 md:text-6xl">
-              Heritage <span className="text-red-500">Livestock</span>
-              <br />
-              Excellence
+                {livestockCategoriesTitle}
             </h2>
+            )}
+            {livestockCategoriesDescription && (
             <p className="mx-auto max-w-4xl text-xl leading-relaxed text-gray-600">
-              Premium breeds raised with care in natural environments for
-              optimal health and quality, supporting sustainable agriculture.
+                {livestockCategoriesDescription}
             </p>
+            )}
           </div>
 
           {/* Livestock Cards - Two Side by Side */}
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            {livestockCategories.map((category, index) => (
+            {livestockCategories.map((category: any, index: number) => (
               <div
                 key={index}
                 className={`group relative bg-white rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-700 transform hover:-translate-y-2 overflow-hidden border border-gray-200 hover:border-red-300 ${
@@ -470,19 +480,23 @@ export function LivestockTemplate({ business, content, template, preview = false
               >
                 {/* Hero Image Section */}
                 <div className="overflow-hidden relative h-80">
+                  {category.image && (
                   <img
-                    src={getUpdatedImage(category.name)}
+                      src={category.image}
                     alt={category.name}
                     className="object-cover w-full h-full transition-transform duration-1000 group-hover:scale-110"
                   />
+                  )}
 
                   {/* Sophisticated Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-br via-transparent from-black/60 to-red-900/40" />
 
                   {/* Floating Specialty Badge */}
+                  {category.specialty && (
                   <div className="absolute top-6 right-6 px-5 py-3 text-sm font-bold text-red-600 rounded-2xl border border-red-100 shadow-xl backdrop-blur-md bg-white/95">
                     {category.specialty}
                   </div>
+                  )}
 
                   {/* Title Section */}
                   <div className="absolute right-0 bottom-0 left-0 p-8 bg-gradient-to-t to-transparent from-black/90">
@@ -505,7 +519,7 @@ export function LivestockTemplate({ business, content, template, preview = false
 
                   {/* Features Grid */}
                   <div className="grid grid-cols-3 gap-3 mb-6">
-                    {category.features.map((feature, featureIndex) => (
+                    {category.features.map((feature: string, featureIndex: number) => (
                       <div
                         key={featureIndex}
                         className="p-3 text-center bg-red-50 rounded-xl border border-red-100"
@@ -518,12 +532,13 @@ export function LivestockTemplate({ business, content, template, preview = false
                   </div>
 
                   {/* Breed Showcase */}
+                  {category.breeds.length > 0 && (
                   <div className="mb-6">
                     <h4 className="mb-3 text-sm font-bold tracking-wide text-gray-800 uppercase">
                       Premium Breeds
                     </h4>
                     <div className="grid grid-cols-2 gap-2">
-                      {category.breeds.map((breed, breedIndex) => (
+                        {category.breeds.map((breed: string, breedIndex: number) => (
                         <span
                           key={breedIndex}
                           className="px-3 py-2 text-sm font-medium text-center text-gray-800 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl border border-gray-300 transition-all duration-300 cursor-pointer hover:from-red-100 hover:to-red-200 hover:text-red-800 hover:border-red-300"
@@ -533,6 +548,7 @@ export function LivestockTemplate({ business, content, template, preview = false
                       ))}
                     </div>
                   </div>
+                  )}
 
                   {/* Action Button */}
                   <a href="#contact" className="inline-block w-full">
@@ -562,8 +578,10 @@ export function LivestockTemplate({ business, content, template, preview = false
           </div>
         </div>
       </section>
+      )}
 
-      {/* Ranch Services Section */}
+      {/* Ranch Services Section - Only render if data exists */}
+      {hasServices && (
       <section id="services" data-section className="py-24 bg-white">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div
@@ -573,18 +591,21 @@ export function LivestockTemplate({ business, content, template, preview = false
                 : "opacity-0 translate-y-8"
             }`}
           >
+            {servicesTitle && (
             <h2 className="mb-6 text-4xl font-bold text-gray-800 md:text-5xl">
-              Our <span className="text-red-600">Services</span>
+                {servicesTitle}
             </h2>
+            )}
             <div className="mx-auto mb-6 w-24 h-1 bg-red-600"></div>
+            {servicesDescription && (
             <p className="mx-auto max-w-3xl text-xl text-gray-600">
-              Comprehensive livestock services from breeding to processing,
-              ensuring quality at every step.
+                {servicesDescription}
             </p>
+            )}
           </div>
 
           <div className="grid gap-8 md:grid-cols-2">
-            {ranchServices.map((service, index) => {
+            {services.map((service: any, index: number) => {
               const IconComponent = service.icon;
               return (
                 <div
@@ -600,15 +621,20 @@ export function LivestockTemplate({ business, content, template, preview = false
                     <IconComponent className="text-red-600" size={32} />
                   </div>
 
+                  {service.title && (
                   <h3 className="mb-4 text-xl font-bold text-gray-800">
                     {service.title}
                   </h3>
+                  )}
+                  {service.description && (
                   <p className="mb-6 text-base leading-relaxed text-gray-600">
                     {service.description}
                   </p>
+                  )}
 
+                  {service.features.length > 0 && (
                   <div className="space-y-3">
-                    {service.features.map((feature, i) => (
+                      {service.features.map((feature: string, i: number) => (
                       <div
                         key={i}
                         className="flex items-center text-sm text-gray-500"
@@ -618,6 +644,7 @@ export function LivestockTemplate({ business, content, template, preview = false
                       </div>
                     ))}
                   </div>
+                  )}
 
                   <a href="#contact" className="inline-block w-full">
                     <button className="py-3 mt-6 w-full text-base font-semibold text-red-600 bg-red-50 rounded-xl transition-colors duration-300 hover:bg-red-100">
@@ -630,8 +657,10 @@ export function LivestockTemplate({ business, content, template, preview = false
           </div>
         </div>
       </section>
+      )}
 
-      {/* Regional Impact Section */}
+      {/* Regional Impact Section - Only render if data exists */}
+      {hasRegionalImpact && (
       <section
         id="regional-impact"
         data-section
@@ -652,21 +681,22 @@ export function LivestockTemplate({ business, content, template, preview = false
                 : "opacity-0 translate-y-8"
             }`}
           >
+            {regionalImpactTitle && (
             <h2 className="mb-6 text-4xl font-bold md:text-5xl">
-              Supporting{" "}
-              <span className="text-red-300">Regional Food Security</span>
+                {regionalImpactTitle}
             </h2>
+            )}
             <div className="mx-auto mb-6 w-24 h-1 bg-gradient-to-r from-red-400 to-red-300"></div>
+            {regionalImpactDescription && (
             <p className="mx-auto max-w-4xl text-xl text-red-100">
-              Our livestock operations play a vital role in strengthening
-              regional food systems and contributing to local meat processing
-              industries, ensuring sustainable food security for our
-              communities.
+                {regionalImpactDescription}
             </p>
+            )}
           </div>
 
           <div className="grid gap-12 items-center lg:grid-cols-2">
             {/* Food Security Content */}
+            {foodSecurityPoints.length > 0 && (
             <div
               className={`transition-all duration-800 ${
                 visibleSections.has("regional-impact")
@@ -680,49 +710,29 @@ export function LivestockTemplate({ business, content, template, preview = false
                     <Shield className="text-red-300" size={24} />
                   </div>
                   <h3 className="text-2xl font-bold text-red-100">
-                    Food Security Impact
+                      {regionalImpactContent?.foodSecurityTitle || 'Food Security Impact'}
                   </h3>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-start">
+                    {foodSecurityPoints.map((point: any, index: number) => (
+                      <div key={index} className="flex items-start">
                     <div className="flex-shrink-0 mt-2 mr-4 w-2 h-2 bg-red-400 rounded-full"></div>
                     <p className="leading-relaxed text-red-100">
-                      <strong className="text-white">
-                        Local Supply Chain:
-                      </strong>{" "}
-                      Reducing dependency on distant suppliers by providing
-                      fresh, high-quality meat products directly to regional
-                      markets and communities.
+                          {point.title && (
+                            <strong className="text-white">{point.title}:</strong>
+                          )}{' '}
+                          {point.description || point.text || point}
                     </p>
                   </div>
-
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0 mt-2 mr-4 w-2 h-2 bg-red-400 rounded-full"></div>
-                    <p className="leading-relaxed text-red-100">
-                      <strong className="text-white">
-                        Sustainable Practices:
-                      </strong>{" "}
-                      Implementing environmentally responsible farming methods
-                      that ensure long-term food production capabilities.
-                    </p>
+                    ))}
                   </div>
-
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0 mt-2 mr-4 w-2 h-2 bg-red-400 rounded-full"></div>
-                    <p className="leading-relaxed text-red-100">
-                      <strong className="text-white">
-                        Community Resilience:
-                      </strong>{" "}
-                      Building stronger local food systems that can withstand
-                      supply chain disruptions and economic challenges.
-                    </p>
                   </div>
                 </div>
-              </div>
-            </div>
+            )}
 
             {/* Processing Industry Content */}
+            {processingPartnershipPoints.length > 0 && (
             <div
               className={`transition-all duration-800 ${
                 visibleSections.has("regional-impact")
@@ -737,44 +747,30 @@ export function LivestockTemplate({ business, content, template, preview = false
                     <Factory className="text-red-300" size={24} />
                   </div>
                   <h3 className="text-2xl font-bold text-red-100">
-                    Local Processing Partnership
+                      {regionalImpactContent?.processingTitle || 'Local Processing Partnership'}
                   </h3>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-start">
+                    {processingPartnershipPoints.map((point: any, index: number) => (
+                      <div key={index} className="flex items-start">
                     <div className="flex-shrink-0 mt-2 mr-4 w-2 h-2 bg-red-400 rounded-full"></div>
                     <p className="leading-relaxed text-red-100">
-                      <strong className="text-white">Industry Support:</strong>{" "}
-                      Partnering with local meat processing facilities to create
-                      jobs and strengthen the regional agricultural economy.
+                          {point.title && (
+                            <strong className="text-white">{point.title}:</strong>
+                          )}{' '}
+                          {point.description || point.text || point}
                     </p>
                   </div>
-
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0 mt-2 mr-4 w-2 h-2 bg-red-400 rounded-full"></div>
-                    <p className="leading-relaxed text-red-100">
-                      <strong className="text-white">Quality Standards:</strong>{" "}
-                      Maintaining the highest processing standards to ensure
-                      safe, premium meat products for consumers.
-                    </p>
+                    ))}
                   </div>
-
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0 mt-2 mr-4 w-2 h-2 bg-red-400 rounded-full"></div>
-                    <p className="leading-relaxed text-red-100">
-                      <strong className="text-white">Economic Growth:</strong>{" "}
-                      Contributing to local economic development through direct
-                      partnerships and supporting related businesses in the
-                      supply chain.
-                    </p>
                   </div>
                 </div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Impact Statistics */}
+          {impactStats.length > 0 && (
           <div
             className={`mt-16 transition-all duration-800 ${
               visibleSections.has("regional-impact")
@@ -784,44 +780,25 @@ export function LivestockTemplate({ business, content, template, preview = false
             style={{ transitionDelay: "400ms" }}
           >
             <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-              <div className="text-center">
+                {impactStats.map((stat: any, index: number) => (
+                  <div key={index} className="text-center">
                 <div className="mb-2 text-3xl font-bold text-red-300">
-                  Premium
+                      {stat.value || stat.number || stat.label || ''}
                 </div>
                 <div className="text-sm tracking-wide text-red-100 uppercase">
-                  Quality Standards
+                      {stat.title || stat.description || ''}
                 </div>
               </div>
-              <div className="text-center">
-                <div className="mb-2 text-3xl font-bold text-red-300">
-                  Fresh
+                ))}
                 </div>
-                <div className="text-sm tracking-wide text-red-100 uppercase">
-                  Daily Products
                 </div>
-              </div>
-              <div className="text-center">
-                <div className="mb-2 text-3xl font-bold text-red-300">
-                  Local
-                </div>
-                <div className="text-sm tracking-wide text-red-100 uppercase">
-                  Community Focus
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="mb-2 text-3xl font-bold text-red-300">
-                  Trusted
-                </div>
-                <div className="text-sm tracking-wide text-red-100 uppercase">
-                  Service Provider
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </section>
+      )}
 
-      {/* Contact Section */}
+      {/* Contact Section - Only render if data exists */}
+      {hasContactContent && (
       <section id="contact" data-section className="py-24 bg-white">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div
@@ -832,19 +809,23 @@ export function LivestockTemplate({ business, content, template, preview = false
             }`}
           >
             <div className="mb-16 text-center">
+              {contactTitle && (
               <h2 className="mb-6 text-4xl font-bold text-gray-900 md:text-5xl">
-                Contact <span className="text-red-600">Us</span>
+                  {contactTitle}
               </h2>
+              )}
               <div className="mx-auto mb-6 w-24 h-1 bg-red-600"></div>
+              {contactDescription && (
               <p className="mx-auto max-w-3xl text-xl text-gray-600">
-                Ready to experience premium livestock products? Get in touch
-                with our team for orders, inquiries, or ranch visits.
+                  {contactDescription}
               </p>
+              )}
             </div>
 
             {/* Contact Cards Grid */}
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {/* Phone Contact */}
+              {contactPhone && (
               <div className="p-8 bg-white rounded-2xl border border-gray-200 shadow-lg transition-all duration-300 group hover:shadow-xl hover:border-red-200">
                 <div className="flex justify-center items-center mx-auto mb-6 w-16 h-16 bg-red-100 rounded-full transition-colors duration-300 group-hover:bg-red-200">
                   <Phone className="text-red-600" size={28} />
@@ -857,15 +838,17 @@ export function LivestockTemplate({ business, content, template, preview = false
                 </p>
                 <div className="text-center">
                   <a
-                    href="tel:+15553216547"
+                      href={`tel:${contactPhone.replace(/\s/g, '')}`}
                     className="text-lg font-semibold text-red-600 transition-colors duration-300 hover:text-red-700"
                   >
-                    +1 (555) 321-6547
+                      {contactPhone}
                   </a>
                 </div>
               </div>
+              )}
 
               {/* Email Contact */}
+              {contactEmail && (
               <div className="p-8 bg-white rounded-2xl border border-gray-200 shadow-lg transition-all duration-300 group hover:shadow-xl hover:border-red-200">
                 <div className="flex justify-center items-center mx-auto mb-6 w-16 h-16 bg-red-100 rounded-full transition-colors duration-300 group-hover:bg-red-200">
                   <Mail className="text-red-600" size={28} />
@@ -878,15 +861,17 @@ export function LivestockTemplate({ business, content, template, preview = false
                 </p>
                 <div className="text-center">
                   <a
-                    href="mailto:ranch@bundufarms.com"
+                      href={`mailto:${contactEmail}`}
                     className="text-lg font-semibold text-red-600 transition-colors duration-300 hover:text-red-700"
                   >
-                    ranch@bundufarms.com
+                      {contactEmail}
                   </a>
                 </div>
               </div>
+              )}
 
               {/* Business Hours */}
+              {contactHours && (
               <div className="p-8 bg-white rounded-2xl border border-gray-200 shadow-lg transition-all duration-300 group hover:shadow-xl hover:border-red-200 md:col-span-2 lg:col-span-1">
                 <div className="flex justify-center items-center mx-auto mb-6 w-16 h-16 bg-red-100 rounded-full transition-colors duration-300 group-hover:bg-red-200">
                   <Clock className="text-red-600" size={28} />
@@ -895,16 +880,26 @@ export function LivestockTemplate({ business, content, template, preview = false
                   Business Hours
                 </h3>
                 <div className="space-y-2 text-center text-gray-600">
-                  <p className="font-medium">Ranch Tours</p>
-                  <p className="text-sm">Saturdays: 10:00 AM - 3:00 PM</p>
-                  <p className="mt-3 font-medium">Farm Store</p>
-                  <p className="text-sm">Daily: 8:00 AM - 6:00 PM</p>
+                    {typeof contactHours === 'string' ? (
+                      <p className="text-sm">{contactHours}</p>
+                    ) : Array.isArray(contactHours) ? (
+                      contactHours.map((hour: any, index: number) => (
+                        <div key={index}>
+                          <p className="font-medium">{hour.label || hour.day || ''}</p>
+                          <p className="text-sm">{hour.hours || hour.time || ''}</p>
                 </div>
+                      ))
+                    ) : (
+                      <p className="text-sm">{contactHours}</p>
+                    )}
               </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </section>
+      )}
 
       <style>{`
         @keyframes float {
