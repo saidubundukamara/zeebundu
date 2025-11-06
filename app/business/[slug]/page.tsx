@@ -15,6 +15,7 @@ import { LivestockTemplate } from '@/components/business-templates/LivestockTemp
 import { SalonTemplate } from '@/components/business-templates/SalonTemplate';
 import { WaterProductionTemplate } from '@/components/business-templates/WaterProductionTemplate';
 import { MicroFinanceTemplate } from '@/components/business-templates/MicroFinanceTemplate';
+import { ComingSoonOverlay } from '@/components/shared/ComingSoonOverlay';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -140,25 +141,32 @@ export default async function BusinessPage({ params }: PageProps) {
     '--brand-secondary': business.branding?.secondaryColor || '#06B6D4',
   } as React.CSSProperties;
   
+  const isComingSoon = business.status === 'coming-soon';
+  
   return (
-    <main style={brandingStyles}>
-      <TemplateComponent 
-        business={business}
-        content={content as any}
-        template={{
-          name: business.template,
-          slug: business.template,
-          component: TemplateComponent.name,
-          displayName: business.template.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          description: `Template for ${business.industry} businesses`,
-          category: business.industry,
-          isActive: true,
-          sections: [],
-          colorScheme: 'default',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        } as any}
-      />
+    <main style={brandingStyles} className={isComingSoon ? 'relative' : ''}>
+      {isComingSoon && (
+        <ComingSoonOverlay businessName={business.name} />
+      )}
+      <div className={isComingSoon ? 'blur-[2px] pointer-events-none' : ''}>
+        <TemplateComponent 
+          business={business}
+          content={content as any}
+          template={{
+            name: business.template,
+            slug: business.template,
+            component: TemplateComponent.name,
+            displayName: business.template.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            description: `Template for ${business.industry} businesses`,
+            category: business.industry,
+            isActive: true,
+            sections: [],
+            colorScheme: 'default',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          } as any}
+        />
+      </div>
     </main>
   );
 }

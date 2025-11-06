@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Save, Eye, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -30,7 +29,7 @@ const businessSchema = z.object({
   state: z.string().optional(),
   zipCode: z.string().optional(),
   website: z.string().url("Please enter a valid website URL").optional().or(z.literal("")),
-  isActive: z.boolean(),
+  status: z.enum(["draft", "active", "coming-soon", "deleted"]),
   primaryColor: z.string(),
   secondaryColor: z.string(),
 });
@@ -83,7 +82,7 @@ function transformBusinessForEdit(business: DatabaseBusiness): BusinessFormData 
     state: '', // Not in database schema  
     zipCode: '', // Not in database schema
     website: getWebsiteFromSocialMedia(),
-    isActive: business.status === 'active',
+    status: business.status || 'draft',
     primaryColor: business.branding?.primaryColor || '#3b82f6',
     secondaryColor: business.branding?.secondaryColor || '#ef4444',
   };
@@ -115,7 +114,7 @@ function transformFormToDatabaseBusiness(formData: BusinessFormData, existingBus
     description: formData.description,
     industry: formData.industry,
     template: formData.template,
-    status: formData.isActive ? 'active' : 'inactive',
+    status: formData.status,
     branding: {
       primaryColor: formData.primaryColor,
       secondaryColor: formData.secondaryColor,
@@ -189,7 +188,7 @@ export default function EditBusinessPage() {
       state: "",
       zipCode: "",
       website: "",
-      isActive: true,
+      status: 'draft',
       primaryColor: "#3b82f6",
       secondaryColor: "#ef4444",
     },
@@ -572,21 +571,31 @@ export default function EditBusinessPage() {
                 <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="isActive"
+                    name="status"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Active</FormLabel>
-                          <FormDescription>
-                            Make this business visible to the public
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value || 'draft'}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="coming-soon">Coming Soon</SelectItem>
+                            <SelectItem value="deleted">Deleted</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Active: Visible to public. Coming Soon: Shows with overlay. Draft: Hidden. Deleted: Removed.
+                        </FormDescription>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />

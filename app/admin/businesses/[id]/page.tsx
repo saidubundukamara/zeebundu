@@ -45,6 +45,7 @@ interface AdminBusinessDetails {
   zipCode: string;
   website: string;
   isActive: boolean;
+  status: string;
   primaryColor: string;
   secondaryColor: string;
   createdAt: string;
@@ -78,7 +79,8 @@ function transformBusinessDetailsForAdmin(business: DatabaseBusiness): AdminBusi
     state: '', // Not in database schema - could be extracted from address  
     zipCode: '', // Not in database schema - could be extracted from address
     website: business.socialMedia?.facebook || '', // Using social media as website fallback
-    isActive: business.status === 'active',
+    isActive: business.status === 'active' || business.status === 'coming-soon',
+    status: business.status,
     primaryColor: business.branding?.primaryColor || '#3b82f6',
     secondaryColor: business.branding?.secondaryColor || '#ef4444',
     createdAt: formatDate(business.createdAt),
@@ -227,8 +229,8 @@ export default function BusinessDetailsPage() {
             <div className="flex items-center gap-3 mb-1">
               <Building2 className="w-6 h-6" />
               <h1 className="text-3xl font-bold">{business.name}</h1>
-              <Badge variant={business.isActive ? "default" : "secondary"}>
-                {business.isActive ? "Active" : "Inactive"}
+              <Badge variant={business.status === 'active' ? "default" : business.status === 'coming-soon' ? "secondary" : "outline"}>
+                {business.status === 'active' ? "Active" : business.status === 'coming-soon' ? "Coming Soon" : "Inactive"}
               </Badge>
             </div>
             <p className="text-muted-foreground">{business.description}</p>

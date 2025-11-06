@@ -168,8 +168,8 @@ export class BusinessService {
         };
       }
 
-      // Only return active businesses for public access
-      if (business.status !== BUSINESS_STATUS.ACTIVE) {
+      // Allow both active and coming-soon businesses for public access
+      if (business.status !== BUSINESS_STATUS.ACTIVE && business.status !== BUSINESS_STATUS.COMING_SOON) {
         return {
           success: false,
           error: "Business not available",

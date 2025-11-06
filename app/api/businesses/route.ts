@@ -14,10 +14,18 @@ export async function GET(request: NextRequest) {
     if (search) {
       result = await businessService.searchBusinesses(search);
     } else {
-      const filters = {
-        ...(template && { template }),
-        ...(status && { status }),
-      };
+      // Handle special case: status=active should also include coming-soon for public display
+      let filters: any = {};
+      if (template) {
+        filters.template = template;
+      }
+      if (status === 'active') {
+        // For public display, include both active and coming-soon businesses
+        filters.status = { $in: ['active', 'coming-soon'] };
+      } else if (status) {
+        filters.status = status;
+      }
+      
       result = await businessService.getAllBusinesses(Object.keys(filters).length > 0 ? filters : undefined);
     }
 
