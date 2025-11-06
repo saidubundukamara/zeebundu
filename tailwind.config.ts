@@ -52,6 +52,16 @@ const config = {
     "border-sage",
     "border-warm-brown",
     "border-cream",
+    // Gradient classes for custom colors
+    "from-terracotta",
+    "to-terracotta",
+    "via-terracotta",
+    "from-sage",
+    "to-sage",
+    "via-sage",
+    "from-warm-brown",
+    "to-warm-brown",
+    "via-warm-brown",
 
     // Hover states for custom colors
     "hover:bg-terracotta",

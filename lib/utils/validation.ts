@@ -20,7 +20,7 @@ export const businessSchema = z.object({
     .max(500, "Description too long"),
   industry: z.string().min(1, "Industry is required"),
   template: z.string().min(1, "Template is required"),
-  status: z.enum(["draft", "active", "inactive", "deleted"]),
+  status: z.enum(["draft", "active", "coming-soon", "deleted"]),
   branding: z.object({
     primaryColor: z.string().regex(/^#[0-9A-F]{6}$/i, "Invalid color format"),
     secondaryColor: z.string().regex(/^#[0-9A-F]{6}$/i, "Invalid color format"),

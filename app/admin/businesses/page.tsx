@@ -43,7 +43,7 @@ interface AdminBusiness {
   slug: string;
   template: string;
   industry: string;
-  status: "active" | "inactive" | "draft" | "deleted";
+  status: "active" | "coming-soon" | "draft" | "deleted";
   createdAt: string;
   lastUpdated: string;
   views: number;
@@ -128,8 +128,8 @@ export default function BusinessesPage() {
     switch (status) {
       case "active":
         return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-      case "inactive":
-        return <Badge variant="secondary">Inactive</Badge>;
+      case "coming-soon":
+        return <Badge className="bg-yellow-100 text-yellow-800">Coming Soon</Badge>;
       case "draft":
         return <Badge variant="outline">Draft</Badge>;
       case "deleted":

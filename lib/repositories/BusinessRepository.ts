@@ -57,7 +57,7 @@ export class BusinessRepository extends BaseRepository<Business> implements IBus
 
   async deactivateBusiness(id: string): Promise<Business | null> {
     return await this.updateById(id, {
-      $set: { status: BUSINESS_STATUS.INACTIVE }
+      $set: { status: BUSINESS_STATUS.COMING_SOON }
     });
   }
 
@@ -84,9 +84,7 @@ export class BusinessRepository extends BaseRepository<Business> implements IBus
   }
 
   async getBusinessesByFilters(filters: BusinessFilters): Promise<Business[]> {
-    const query: any = {
-      status: { $ne: BUSINESS_STATUS.DELETED }
-    };
+    const query: any = {};
 
     if (filters.template) {
       query.template = filters.template;
@@ -97,7 +95,23 @@ export class BusinessRepository extends BaseRepository<Business> implements IBus
     }
 
     if (filters.status) {
-      query.status = filters.status;
+      // Handle both string status and object status (e.g., { $in: [...] })
+      if (typeof filters.status === 'object' && !Array.isArray(filters.status)) {
+        // For object filters like { $in: [...] }, use it directly but exclude deleted
+        if (filters.status.$in) {
+          query.status = { 
+            $in: filters.status.$in.filter((s: string) => s !== BUSINESS_STATUS.DELETED)
+          };
+        } else {
+          query.status = filters.status;
+        }
+      } else {
+        // String status
+        query.status = filters.status;
+      }
+    } else {
+      // If no status filter, exclude deleted by default
+      query.status = { $ne: BUSINESS_STATUS.DELETED };
     }
 
     if (filters.search) {

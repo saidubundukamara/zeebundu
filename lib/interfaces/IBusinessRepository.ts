@@ -26,7 +26,7 @@ export interface IBusinessRepository extends IBaseRepository<Business> {
 export interface BusinessFilters {
   template?: string;
   industry?: string;
-  status?: string;
+  status?: string | { $in?: string[]; $ne?: string; [key: string]: any };
   search?: string;
   createdAfter?: Date;
   createdBefore?: Date;

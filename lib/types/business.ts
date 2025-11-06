@@ -7,7 +7,7 @@ export interface Business {
   description: string;
   industry: string;
   template: string;
-  status: 'draft' | 'active' | 'inactive' | 'deleted';
+  status: 'draft' | 'active' | 'coming-soon' | 'deleted';
   branding: BrandingConfig;
   seo: SEOData;
   contact: ContactInfo;

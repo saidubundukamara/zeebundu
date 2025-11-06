@@ -53,7 +53,7 @@ export const CONTENT_SECTIONS = {
 export const BUSINESS_STATUS = {
   DRAFT: 'draft',
   ACTIVE: 'active',
-  INACTIVE: 'inactive',
+  COMING_SOON: 'coming-soon',
   DELETED: 'deleted',
 } as const;
 
