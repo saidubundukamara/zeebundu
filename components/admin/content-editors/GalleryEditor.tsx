@@ -20,21 +20,44 @@ import {
 } from 'lucide-react';
 import { MediaAsset } from '@/lib/types';
 
-// ImageThumbnail component with error handling
+// Helper function to safely extract URL string (same as MediaLibrary)
+function getUrlString(urlValue: any): string {
+  if (!urlValue) return '';
+  if (typeof urlValue === 'string') return urlValue;
+  if (typeof urlValue === 'object') {
+    // Handle cases where URL might be in object format
+    return urlValue.url || urlValue.href || urlValue.src || '';
+  }
+  return String(urlValue);
+}
+
+// ImageThumbnail component with error handling (same fixes as MediaLibrary)
 interface ImageThumbnailProps {
   src: string;
   alt: string;
   className?: string;
+  fallbackSrc?: string; // Original URL to use if thumbnail fails
 }
 
-function ImageThumbnail({ src, alt, className }: ImageThumbnailProps) {
+function ImageThumbnail({ src, alt, className, fallbackSrc }: ImageThumbnailProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
+
+  // Ensure src is a string
+  const srcString = getUrlString(src);
+  const fallbackString = fallbackSrc ? getUrlString(fallbackSrc) : null;
 
   useEffect(() => {
-    setLoading(true);
-    setError(false);
-  }, [src]);
+    if (srcString && srcString.trim() !== '') {
+      setLoading(true);
+      setError(false);
+      setUseFallback(false);
+    } else {
+      setLoading(false);
+      setError(true);
+    }
+  }, [srcString, fallbackString]);
 
   const handleLoad = () => {
     setLoading(false);
@@ -42,29 +65,53 @@ function ImageThumbnail({ src, alt, className }: ImageThumbnailProps) {
   };
 
   const handleError = () => {
+    // Try using the fallback URL if thumbnail failed
+    if (!useFallback && fallbackString && fallbackString !== srcString) {
+      setUseFallback(true);
+      setLoading(true);
+      setError(false);
+      return;
+    }
+    
     setLoading(false);
     setError(true);
   };
 
+  if (!srcString || srcString.trim() === '') {
+    return (
+      <div className={`${className || 'w-full h-full'} bg-gray-100 flex items-center justify-center rounded`}>
+        <ImageIcon className="w-8 h-8 text-gray-400" />
+      </div>
+    );
+  }
+
+  // Use fallback if thumbnail failed
+  const imageSrc = useFallback && fallbackString ? fallbackString : srcString;
+
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className || 'w-full h-full'} overflow-hidden rounded`}>
       {loading && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center z-10">
           <ImageIcon className="w-4 h-4 text-gray-400" />
         </div>
       )}
       
       {error ? (
-        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-          <ImageIcon className="w-4 h-4 text-gray-400" />
+        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-10">
+          <div className="text-center">
+            <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+            <span className="text-xs text-gray-500 block">Failed to load</span>
+          </div>
         </div>
       ) : (
         <img
-          src={src}
-          alt={alt}
-          className={`${className} ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+          key={useFallback ? 'fallback' : 'primary'}
+          src={imageSrc}
+          alt={alt || 'Gallery image'}
+          className={`w-full h-full object-cover ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
           onLoad={handleLoad}
           onError={handleError}
+          loading="lazy"
         />
       )}
     </div>
@@ -316,9 +363,10 @@ export function GalleryEditor({
                         className="aspect-square bg-gray-200 rounded overflow-hidden"
                       >
                         <ImageThumbnail
-                          src={image.media.thumbnailUrl || image.media.url}
+                          src={image.media.thumbnailUrl || image.media.url || ''}
+                          fallbackSrc={image.media.thumbnailUrl ? image.media.url : undefined}
                           alt={image.alt || image.caption || 'Gallery image'}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full"
                         />
                       </div>
                     ))}
@@ -350,9 +398,10 @@ export function GalleryEditor({
                       {/* Image Thumbnail */}
                       <div className="w-20 h-20 bg-gray-200 rounded overflow-hidden flex-shrink-0">
                         <ImageThumbnail
-                          src={image.media.thumbnailUrl || image.media.url}
+                          src={image.media.thumbnailUrl || image.media.url || ''}
+                          fallbackSrc={image.media.thumbnailUrl ? image.media.url : undefined}
                           alt={image.alt || image.caption || 'Gallery image'}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full"
                         />
                       </div>
 

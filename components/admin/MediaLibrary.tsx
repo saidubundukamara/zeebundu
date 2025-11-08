@@ -32,52 +32,107 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import toast from 'react-hot-toast';
 import { MediaAsset } from '@/lib/types';
 
+// Helper function to safely extract URL string
+function getUrlString(urlValue: any): string {
+  if (!urlValue) return '';
+  if (typeof urlValue === 'string') return urlValue;
+  if (typeof urlValue === 'object') {
+    // Handle cases where URL might be in object format
+    return urlValue.url || urlValue.href || urlValue.src || '';
+  }
+  return String(urlValue);
+}
+
 // MediaThumbnail component with error handling and loading states
 interface MediaThumbnailProps {
   src: string;
   alt: string;
   className?: string;
+  fallbackSrc?: string; // Original URL to use if thumbnail fails
 }
 
-function MediaThumbnail({ src, alt, className }: MediaThumbnailProps) {
+function MediaThumbnail({ src, alt, className, fallbackSrc }: MediaThumbnailProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
+
+  // Ensure src is a string
+  const srcString = getUrlString(src);
+  const fallbackString = fallbackSrc ? getUrlString(fallbackSrc) : null;
 
   // Reset states when src changes
   useEffect(() => {
-    setLoading(true);
-    setError(false);
-  }, [src]);
+    if (srcString && srcString.trim() !== '') {
+      setLoading(true);
+      setError(false);
+      setUseFallback(false);
+    } else {
+      setLoading(false);
+      setError(true);
+    }
+  }, [srcString, fallbackString]);
 
   const handleLoad = () => {
     setLoading(false);
     setError(false);
   };
 
-  const handleError = () => {
+  const handleError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    // Try using the fallback URL if thumbnail failed
+    if (!useFallback && fallbackString && fallbackString !== srcString) {
+      setUseFallback(true);
+      setLoading(true);
+      setError(false);
+      return;
+    }
+    
+    // Only log in development mode to reduce console noise
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Image failed to load:', {
+        src: srcString,
+        fallback: fallbackString,
+        triedFallback: useFallback
+      });
+    }
     setLoading(false);
     setError(true);
   };
+  
+  if (!srcString || srcString.trim() === '') {
+    return (
+      <div className={`${className || 'w-full h-full'} bg-gray-100 flex items-center justify-center rounded`}>
+        <Image className="w-8 h-8 text-gray-400" />
+      </div>
+    );
+  }
+
+  // Use fallback if thumbnail failed
+  const imageSrc = useFallback && fallbackString ? fallbackString : srcString;
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className || 'w-full h-full'} overflow-hidden rounded`}>
       {loading && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center z-10">
           <Image className="w-4 h-4 text-gray-400" />
         </div>
       )}
       
       {error ? (
-        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-          <Image className="w-4 h-4 text-gray-400" />
+        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center z-10">
+          <div className="text-center">
+            <Image className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+            <span className="text-xs text-gray-500 block">Failed to load</span>
+          </div>
         </div>
       ) : (
         <img
-          src={src}
-          alt={alt}
-          className={`${className} ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+          key={useFallback ? 'fallback' : 'primary'}
+          src={imageSrc}
+          alt={alt || 'Media thumbnail'}
+          className={`w-full h-full object-cover ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
           onLoad={handleLoad}
           onError={handleError}
+          loading="lazy"
         />
       )}
     </div>
@@ -131,11 +186,61 @@ export function MediaLibrary({
 
       const result = await response.json();
       
+      // Ensure media items have required properties with proper URL extraction
+      const normalizedMedia = (result.data || []).map((item: any) => {
+        const url = getUrlString(item.url || item.src || item.image);
+        const thumbnailUrl = getUrlString(item.thumbnailUrl || item.thumbnail || item.url || item.src || item.image);
+        
+        // Normalize mimeType - ensure it's lowercase and properly formatted
+        let mimeType = (item.mimeType || item.type || '').toLowerCase().trim();
+        
+        // If mimeType is missing but we have originalName, try to infer it
+        if (!mimeType && item.originalName) {
+          const ext = item.originalName.split('.').pop()?.toLowerCase();
+          const mimeTypeMap: Record<string, string> = {
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'webp': 'image/webp',
+            'svg': 'image/svg+xml',
+            'bmp': 'image/bmp',
+            'avif': 'image/avif',
+            'ico': 'image/x-icon',
+          };
+          mimeType = mimeTypeMap[ext || ''] || '';
+        }
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Normalizing media item:', {
+            original: item.url,
+            normalized: url,
+            thumbnail: thumbnailUrl,
+            mimeType: mimeType,
+            originalMimeType: item.mimeType,
+            originalName: item.originalName,
+            isImage: mimeType.startsWith('image/')
+          });
+        }
+        
+        return {
+          ...item,
+          url,
+          thumbnailUrl,
+          mimeType: mimeType,
+          originalName: item.originalName || item.name || item.filename || 'media',
+          tags: Array.isArray(item.tags) ? item.tags : [],
+          alt: item.alt || '',
+          size: item.size || 0,
+          createdAt: item.createdAt || new Date().toISOString(),
+        };
+      });
+      
       if (reset) {
-        setMedia(result.data);
+        setMedia(normalizedMedia);
         setPage(0);
       } else {
-        setMedia(prev => [...prev, ...result.data]);
+        setMedia(prev => [...prev, ...normalizedMedia]);
       }
       
       setHasMore(result.pagination?.hasMore || false);
@@ -236,7 +341,8 @@ export function MediaLibrary({
   };
 
   const copyUrl = (url: string) => {
-    navigator.clipboard.writeText(url);
+    const urlString = getUrlString(url);
+    navigator.clipboard.writeText(urlString);
     toast.success('URL copied to clipboard');
   };
 
@@ -250,6 +356,49 @@ export function MediaLibrary({
 
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString();
+  };
+
+  // Helper function to check if media is an image
+  const isImageMedia = (mediaItem: MediaAsset, mediaUrl: string): boolean => {
+    // First check mimeType (most reliable)
+    if (mediaItem.mimeType) {
+      const mimeType = mediaItem.mimeType.toLowerCase().trim();
+      if (mimeType.startsWith('image/')) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Detected as image by mimeType:', mimeType, mediaItem.originalName);
+        }
+        return true;
+      }
+    }
+    
+    // Fallback: check URL for image extensions
+    if (mediaUrl) {
+      const urlLower = mediaUrl.toLowerCase();
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.avif', '.ico'];
+      const hasImageExt = imageExtensions.some(ext => urlLower.includes(ext));
+      if (hasImageExt && process.env.NODE_ENV === 'development') {
+        console.log('Detected as image by URL extension:', mediaUrl, mediaItem.originalName);
+      }
+      return hasImageExt;
+    }
+    
+    // Last resort: if it's not a video, assume it might be an image (for Cloudinary URLs)
+    if (mediaItem.mimeType && !mediaItem.mimeType.toLowerCase().startsWith('video/')) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Assuming image (not video):', mediaItem.mimeType, mediaItem.originalName);
+      }
+      return true;
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('NOT detected as image:', {
+        mimeType: mediaItem.mimeType,
+        url: mediaUrl,
+        originalName: mediaItem.originalName
+      });
+    }
+    
+    return false;
   };
 
   const getMediaIcon = (mimeType: string) => {
@@ -371,6 +520,8 @@ export function MediaLibrary({
       }>
         {media.map((mediaItem) => {
           const isSelected = selectedMedia.has(mediaItem._id?.toString() || '');
+          const mediaUrl = getUrlString(mediaItem.url);
+          const thumbnailUrl = getUrlString(mediaItem.thumbnailUrl);
           
           if (viewMode === 'grid') {
             return (
@@ -382,16 +533,22 @@ export function MediaLibrary({
                 onClick={() => handleMediaSelection(mediaItem)}
               >
                 <CardContent className="p-2">
-                  <div className="aspect-square relative mb-2">
-                    {mediaItem.mimeType.startsWith('image/') ? (
+                  <div className="aspect-square relative mb-2 overflow-hidden rounded">
+                    {isImageMedia(mediaItem, mediaUrl) ? (
                       <MediaThumbnail
-                        src={mediaItem.thumbnailUrl || mediaItem.url}
-                        alt={mediaItem.alt || mediaItem.originalName}
-                        className="w-full h-full object-cover rounded"
+                        src={thumbnailUrl || mediaUrl}
+                        fallbackSrc={thumbnailUrl ? mediaUrl : undefined}
+                        alt={mediaItem.alt || mediaItem.originalName || 'Media thumbnail'}
+                        className="w-full h-full"
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
-                        {getMediaIcon(mediaItem.mimeType)}
+                        {getMediaIcon(mediaItem.mimeType || '')}
+                        {process.env.NODE_ENV === 'development' && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
+                            {mediaItem.mimeType || 'unknown'}
+                          </div>
+                        )}
                       </div>
                     )}
                     
@@ -417,13 +574,13 @@ export function MediaLibrary({
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => copyUrl(mediaItem.url)}>
+                        <DropdownMenuItem onClick={() => copyUrl(mediaUrl)}>
                           <Copy className="h-4 w-4 mr-2" />
                           Copy URL
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <a 
-                            href={mediaItem.url} 
+                            href={mediaUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="flex items-center"
@@ -434,7 +591,7 @@ export function MediaLibrary({
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <a 
-                            href={mediaItem.url} 
+                            href={mediaUrl} 
                             download={mediaItem.originalName}
                             className="flex items-center"
                           >
@@ -460,7 +617,7 @@ export function MediaLibrary({
                     <p className="text-xs text-gray-500">
                       {formatFileSize(mediaItem.size)}
                     </p>
-                    {mediaItem.tags.length > 0 && (
+                    {mediaItem.tags && mediaItem.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {mediaItem.tags.slice(0, 2).map((tag) => (
                           <Badge key={tag} variant="secondary" className="text-xs">
@@ -493,16 +650,17 @@ export function MediaLibrary({
                       <Checkbox checked={isSelected} />
                     )}
                     
-                    <div className="flex-shrink-0">
-                      {mediaItem.mimeType.startsWith('image/') ? (
+                    <div className="flex-shrink-0 w-16 h-16">
+                      {isImageMedia(mediaItem, mediaUrl) ? (
                         <MediaThumbnail
-                          src={mediaItem.thumbnailUrl || mediaItem.url}
+                          src={thumbnailUrl || mediaUrl}
+                          fallbackSrc={thumbnailUrl ? mediaUrl : undefined}
                           alt={mediaItem.alt || mediaItem.originalName}
-                          className="h-12 w-12 object-cover rounded"
+                          className="w-full h-full"
                         />
                       ) : (
-                        <div className="h-12 w-12 bg-gray-100 rounded flex items-center justify-center">
-                          {getMediaIcon(mediaItem.mimeType)}
+                        <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+                          {getMediaIcon(mediaItem.mimeType || '')}
                         </div>
                       )}
                     </div>
@@ -526,7 +684,7 @@ export function MediaLibrary({
                           </span>
                         )}
                       </div>
-                      {mediaItem.tags.length > 0 && (
+                      {mediaItem.tags && mediaItem.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {mediaItem.tags.map((tag) => (
                             <Badge key={tag} variant="secondary" className="text-xs">
@@ -548,13 +706,13 @@ export function MediaLibrary({
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => copyUrl(mediaItem.url)}>
+                        <DropdownMenuItem onClick={() => copyUrl(mediaUrl)}>
                           <Copy className="h-4 w-4 mr-2" />
                           Copy URL
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <a 
-                            href={mediaItem.url} 
+                            href={mediaUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="flex items-center"
@@ -565,7 +723,7 @@ export function MediaLibrary({
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <a 
-                            href={mediaItem.url} 
+                            href={mediaUrl} 
                             download={mediaItem.originalName}
                             className="flex items-center"
                           >
@@ -628,7 +786,7 @@ export function MediaLibrary({
               <div>
                 {editingMedia.mimeType.startsWith('image/') ? (
                   <img
-                    src={editingMedia.url}
+                    src={getUrlString(editingMedia.url)}
                     alt={editingMedia.alt || editingMedia.originalName}
                     className="w-full rounded-lg"
                   />
@@ -657,7 +815,7 @@ export function MediaLibrary({
                   <Label htmlFor="editTags">Tags (comma-separated)</Label>
                   <Input
                     id="editTags"
-                    value={editingMedia.tags.join(', ')}
+                    value={(editingMedia.tags || []).join(', ')}
                     onChange={(e) => setEditingMedia({
                       ...editingMedia,
                       tags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)
