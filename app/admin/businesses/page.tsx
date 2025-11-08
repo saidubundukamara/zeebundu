@@ -127,15 +127,15 @@ export default function BusinessesPage() {
   const getStatusBadge = (status: AdminBusiness["status"]) => {
     switch (status) {
       case "active":
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+        return <Badge className="bg-green-100 text-green-800 hover:!bg-green-100">Active</Badge>;
       case "coming-soon":
-        return <Badge className="bg-yellow-100 text-yellow-800">Coming Soon</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:!bg-yellow-100">Coming Soon</Badge>;
       case "draft":
-        return <Badge variant="outline">Draft</Badge>;
+        return <Badge variant="outline" className="hover:!bg-transparent">Draft</Badge>;
       case "deleted":
-        return <Badge className="bg-red-100 text-red-800">Deleted</Badge>;
+        return <Badge className="bg-red-100 text-red-800 hover:!bg-red-100">Deleted</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary" className="hover:!bg-secondary">{status}</Badge>;
     }
   };
 

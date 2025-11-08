@@ -409,9 +409,13 @@ export function MediaPreview({
     return media.url;
   };
 
+  // Safely check if media is an image
+  const isImage = media.mimeType?.startsWith('image/') || 
+    (media.url && /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?|$)/i.test(media.url));
+
   return (
     <div className={`${className} relative rounded-lg overflow-hidden border group bg-gray-50`}>
-      {media.mimeType.startsWith('image/') ? (
+      {isImage ? (
         <>
           {imageLoading && (
             <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">

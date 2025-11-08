@@ -318,7 +318,12 @@ export function WaterProductionTemplate({ business, content, template, preview =
                 {/* CTA Buttons */}
                 {heroButtons.length > 0 && (
                 <div className="flex flex-col gap-4 sm:flex-row animate-fade-in-up" style={{ animationDelay: "0.8s" }}>
-                  {heroButtons.map((button: any, index: number) => (
+                  {heroButtons.map((button: any, index: number) => {
+                    const iconName = button.icon || button.iconName;
+                    const ButtonIcon = typeof iconName === 'string' 
+                      ? (iconMap[iconName] || null)
+                      : (iconName || null);
+                    return (
                     <a
                       key={index}
                       href={button.link || button.href || '#'}
@@ -332,11 +337,12 @@ export function WaterProductionTemplate({ business, content, template, preview =
                     <span className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-blue-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
                       )}
                     <span className="flex relative items-center">
-                        {button.icon && <button.icon className="mr-3 w-5 h-5" />}
+                        {ButtonIcon && <ButtonIcon className="mr-3 w-5 h-5" />}
                         {button.text || button.label || 'Learn More'}
                     </span>
                     </a>
-                  ))}
+                    );
+                  })}
                 </div>
                 )}
               </div>
@@ -485,7 +491,9 @@ export function WaterProductionTemplate({ business, content, template, preview =
 
           {/* Products Grid */}
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            {products.map((product: any, index: number) => (
+            {products.map((product: any, index: number) => {
+              const ProductIcon = product.icon;
+              return (
               <div
                 key={index}
                 className="overflow-hidden relative bg-white rounded-3xl border border-gray-200 transition-all duration-500 group hover:border-blue-300 hover:shadow-xl hover:shadow-blue-100/50 hover:scale-105"
@@ -507,7 +515,7 @@ export function WaterProductionTemplate({ business, content, template, preview =
                   <div className="absolute bottom-6 left-6">
                     <div className="flex items-center space-x-4">
                       <div className="flex justify-center items-center w-12 h-12 rounded-xl border backdrop-blur-sm bg-white/90 border-white/20">
-                        <product.icon className="w-6 h-6 text-blue-600" />
+                        {ProductIcon && <ProductIcon className="w-6 h-6 text-blue-600" />}
                       </div>
                       <div>
                         <h3 className="text-2xl font-bold text-white drop-shadow-lg">
@@ -586,7 +594,8 @@ export function WaterProductionTemplate({ business, content, template, preview =
                 {/* Hover Effect Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br rounded-3xl transition-all duration-500 pointer-events-none from-blue-50/0 to-blue-100/0 group-hover:from-blue-50/30 group-hover:to-blue-100/30"></div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
         </div>
@@ -686,7 +695,9 @@ export function WaterProductionTemplate({ business, content, template, preview =
           </div>
 
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {services.map((service: any, index: number) => (
+            {services.map((service: any, index: number) => {
+              const ServiceIcon = service.icon;
+              return (
               <div
                 key={index}
                 className="relative p-8 text-center rounded-2xl border border-blue-100 backdrop-blur-sm transition-all duration-500 group bg-white/80 hover:bg-white hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-2 hover:border-blue-300"
@@ -697,7 +708,7 @@ export function WaterProductionTemplate({ business, content, template, preview =
                 {/* Service Icon with Water Effect */}
                 <div className="relative mx-auto mb-6">
                   <div className="flex justify-center items-center mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:shadow-blue-500/30 group-hover:scale-110">
-                    <service.icon className="w-10 h-10 text-white" />
+                    {ServiceIcon && <ServiceIcon className="w-10 h-10 text-white" />}
                   </div>
                   {/* Ripple Effect */}
                   <div className="absolute inset-0 mx-auto w-20 h-20 rounded-full opacity-0 animate-ping bg-blue-400/20 group-hover:opacity-100" />
@@ -728,7 +739,8 @@ export function WaterProductionTemplate({ business, content, template, preview =
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
         </div>
@@ -797,6 +809,7 @@ export function WaterProductionTemplate({ business, content, template, preview =
               const colors = isEven 
                 ? { from: 'from-blue-500', to: 'to-cyan-500', border: 'border-blue-200', text: 'text-blue-600', hover: 'hover:shadow-blue-500/25' }
                 : { from: 'from-cyan-500', to: 'to-blue-500', border: 'border-cyan-200', text: 'text-cyan-600', hover: 'hover:shadow-cyan-500/25' };
+              const StepIcon = step.icon;
               
               return (
                 <div
@@ -817,7 +830,7 @@ export function WaterProductionTemplate({ business, content, template, preview =
                   <div className="flex gap-6 items-center mb-6">
                     <div className="relative">
                           <div className={`flex justify-center items-center w-16 h-16 bg-gradient-to-br ${colors.from} ${colors.to} rounded-full shadow-lg transition-all duration-500 group-hover:shadow-xl ${colors.hover}`}>
-                            <step.icon className="w-8 h-8 text-white" />
+                            {StepIcon && <StepIcon className="w-8 h-8 text-white" />}
                       </div>
                       <div className="absolute inset-0 w-16 h-16 rounded-full opacity-0 animate-ping bg-blue-400/30 group-hover:opacity-100" />
                     </div>
@@ -1026,7 +1039,6 @@ export function WaterProductionTemplate({ business, content, template, preview =
       </section>
       )}
 
-      <Footer />
     </div>
   );
 }

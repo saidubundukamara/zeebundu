@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,21 +69,43 @@ export function HeroEditor({
   const [activeTab, setActiveTab] = useState<'content' | 'media' | 'design'>('content');
   const [showPreview, setShowPreview] = useState(false);
 
+  // Normalize content with default values for missing properties
+  const normalizedContent: HeroContent = useMemo(() => ({
+    title: content.title || '',
+    subtitle: content.subtitle,
+    description: content.description || '',
+    backgroundImage: content.backgroundImage,
+    backgroundVideo: content.backgroundVideo,
+    overlay: content.overlay || {
+      enabled: false,
+      color: '#000000',
+      opacity: 50
+    },
+    textAlign: content.textAlign || 'left',
+    buttons: content.buttons || [],
+    style: content.style || {
+      titleSize: 'lg',
+      titleColor: '#ffffff',
+      descriptionColor: '#e5e7eb',
+      backgroundColor: '#1f2937'
+    }
+  }), [content]);
+
   const updateField = (field: keyof HeroContent, value: any) => {
-    onChange({ ...content, [field]: value });
+    onChange({ ...normalizedContent, [field]: value });
   };
 
   const updateOverlay = (field: keyof HeroContent['overlay'], value: any) => {
     onChange({
-      ...content,
-      overlay: { ...content.overlay, [field]: value }
+      ...normalizedContent,
+      overlay: { ...normalizedContent.overlay, [field]: value }
     });
   };
 
   const updateStyle = (field: keyof HeroContent['style'], value: any) => {
     onChange({
-      ...content,
-      style: { ...content.style, [field]: value }
+      ...normalizedContent,
+      style: { ...normalizedContent.style, [field]: value }
     });
   };
 
@@ -95,18 +117,18 @@ export function HeroEditor({
       style: 'primary',
       isVisible: true
     };
-    updateField('buttons', [...content.buttons, newButton]);
+    updateField('buttons', [...normalizedContent.buttons, newButton]);
   };
 
   const updateButton = (buttonId: string, field: keyof HeroButton, value: any) => {
-    const updatedButtons = content.buttons.map(btn =>
+    const updatedButtons = normalizedContent.buttons.map(btn =>
       btn.id === buttonId ? { ...btn, [field]: value } : btn
     );
     updateField('buttons', updatedButtons);
   };
 
   const removeButton = (buttonId: string) => {
-    const updatedButtons = content.buttons.filter(btn => btn.id !== buttonId);
+    const updatedButtons = normalizedContent.buttons.filter(btn => btn.id !== buttonId);
     updateField('buttons', updatedButtons);
   };
 
@@ -165,60 +187,60 @@ export function HeroEditor({
           <CardContent>
             <div 
               className="relative h-64 md:h-80 rounded-lg overflow-hidden"
-              style={{ backgroundColor: content.style.backgroundColor }}
+              style={{ backgroundColor: normalizedContent.style.backgroundColor }}
             >
               {/* Background Media */}
-              {content.backgroundImage && (
+              {normalizedContent.backgroundImage && (
                 <img
-                  src={content.backgroundImage.url}
+                  src={normalizedContent.backgroundImage.url}
                   alt="Hero background"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               )}
-              {content.backgroundVideo && (
+              {normalizedContent.backgroundVideo && (
                 <video
                   className="absolute inset-0 w-full h-full object-cover"
                   autoPlay
                   muted
                   loop
                 >
-                  <source src={content.backgroundVideo.url} type="video/mp4" />
+                  <source src={normalizedContent.backgroundVideo.url} type="video/mp4" />
                 </video>
               )}
 
               {/* Overlay */}
-              {content.overlay.enabled && (
+              {normalizedContent.overlay.enabled && (
                 <div 
                   className="absolute inset-0"
                   style={{ 
-                    backgroundColor: content.overlay.color,
-                    opacity: content.overlay.opacity / 100
+                    backgroundColor: normalizedContent.overlay.color,
+                    opacity: normalizedContent.overlay.opacity / 100
                   }}
                 />
               )}
 
               {/* Content */}
               <div className={`relative h-full flex items-center justify-center p-8`}>
-                <div className={`text-${content.textAlign} max-w-4xl`}>
+                <div className={`text-${normalizedContent.textAlign} max-w-4xl`}>
                   <h1 
-                    className={`font-bold mb-4 ${titleSizeOptions.find(t => t.value === content.style.titleSize)?.class}`}
-                    style={{ color: content.style.titleColor }}
+                    className={`font-bold mb-4 ${titleSizeOptions.find(t => t.value === normalizedContent.style.titleSize)?.class}`}
+                    style={{ color: normalizedContent.style.titleColor }}
                   >
-                    {content.title || 'Your Hero Title'}
+                    {normalizedContent.title || 'Your Hero Title'}
                   </h1>
-                  {content.subtitle && (
-                    <h2 className="text-xl md:text-2xl mb-4" style={{ color: content.style.descriptionColor }}>
-                      {content.subtitle}
+                  {normalizedContent.subtitle && (
+                    <h2 className="text-xl md:text-2xl mb-4" style={{ color: normalizedContent.style.descriptionColor }}>
+                      {normalizedContent.subtitle}
                     </h2>
                   )}
                   <p 
                     className="text-lg md:text-xl mb-8"
-                    style={{ color: content.style.descriptionColor }}
+                    style={{ color: normalizedContent.style.descriptionColor }}
                   >
-                    {content.description || 'Your hero description goes here'}
+                    {normalizedContent.description || 'Your hero description goes here'}
                   </p>
                   <div className="flex gap-4 justify-center">
-                    {content.buttons.filter(btn => btn.isVisible).map((button, index) => (
+                    {normalizedContent.buttons.filter(btn => btn.isVisible).map((button, index) => (
                       <button
                         key={button.id || `btn-preview-${index}`}
                         className={`px-6 py-3 rounded-lg font-medium ${
@@ -251,7 +273,7 @@ export function HeroEditor({
             <div>
               <label className="text-sm font-medium mb-2 block">Main Title</label>
               <Input
-                value={content.title}
+                value={normalizedContent.title}
                 onChange={(e) => updateField('title', e.target.value)}
                 placeholder="Your compelling headline"
                 className="text-lg"
@@ -261,7 +283,7 @@ export function HeroEditor({
             <div>
               <label className="text-sm font-medium mb-2 block">Subtitle (Optional)</label>
               <Input
-                value={content.subtitle || ''}
+                value={normalizedContent.subtitle || ''}
                 onChange={(e) => updateField('subtitle', e.target.value)}
                 placeholder="Supporting headline"
               />
@@ -270,7 +292,7 @@ export function HeroEditor({
             <div>
               <label className="text-sm font-medium mb-2 block">Description</label>
               <Textarea
-                value={content.description}
+                value={normalizedContent.description}
                 onChange={(e) => updateField('description', e.target.value)}
                 placeholder="Describe your business value proposition"
                 rows={3}
@@ -287,7 +309,7 @@ export function HeroEditor({
                 ].map((align) => (
                   <Button
                     key={align.value}
-                    variant={content.textAlign === align.value ? 'default' : 'outline'}
+                    variant={normalizedContent.textAlign === align.value ? 'default' : 'outline'}
                     onClick={() => updateField('textAlign', align.value)}
                   >
                     {align.label}
@@ -310,7 +332,7 @@ export function HeroEditor({
               </div>
 
               <div className="space-y-3">
-                {content.buttons.map((button, index) => {
+                {normalizedContent.buttons.map((button, index) => {
                   // Ensure button has an ID for React key - use index as fallback
                   const buttonId = button.id || `btn-temp-${index}`;
                   return (
@@ -390,7 +412,7 @@ export function HeroEditor({
             <div>
               <label className="text-sm font-medium mb-3 block">Background Image</label>
               <MediaPreview
-                media={content.backgroundImage || null}
+                media={normalizedContent.backgroundImage || null}
                 onSelect={() => {}}
                 onRemove={() => updateField('backgroundImage', undefined)}
                 placeholder="Select a background image"
@@ -401,7 +423,7 @@ export function HeroEditor({
                   trigger={
                     <Button variant="outline" >
                       <ImageIcon className="w-4 h-4 mr-2" />
-                      {content.backgroundImage ? 'Change Image' : 'Select Image'}
+                      {normalizedContent.backgroundImage ? 'Change Image' : 'Select Image'}
                     </Button>
                   }
                   onSelect={(media) => updateField('backgroundImage', Array.isArray(media) ? media[0] : media)}
@@ -418,7 +440,7 @@ export function HeroEditor({
             <div>
               <label className="text-sm font-medium mb-3 block">Background Video (Optional)</label>
               <MediaPreview
-                media={content.backgroundVideo || null}
+                media={normalizedContent.backgroundVideo || null}
                 onSelect={() => {}}
                 onRemove={() => updateField('backgroundVideo', undefined)}
                 placeholder="Select a background video"
@@ -429,7 +451,7 @@ export function HeroEditor({
                   trigger={
                     <Button variant="outline" >
                       <Video className="w-4 h-4 mr-2" />
-                      {content.backgroundVideo ? 'Change Video' : 'Select Video'}
+                      {normalizedContent.backgroundVideo ? 'Change Video' : 'Select Video'}
                     </Button>
                   }
                   onSelect={(media) => updateField('backgroundVideo', Array.isArray(media) ? media[0] : media)}
@@ -447,24 +469,24 @@ export function HeroEditor({
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Overlay</label>
                 <Switch
-                  checked={content.overlay.enabled}
+                  checked={normalizedContent.overlay.enabled}
                   onCheckedChange={(checked) => updateOverlay('enabled', checked)}
                 />
               </div>
 
-              {content.overlay.enabled && (
+              {normalizedContent.overlay.enabled && (
                 <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">Overlay Color</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
-                        value={content.overlay.color}
+                        value={normalizedContent.overlay.color}
                         onChange={(e) => updateOverlay('color', e.target.value)}
                         className="w-8 h-8 rounded border"
                       />
                       <Input
-                        value={content.overlay.color}
+                        value={normalizedContent.overlay.color}
                         onChange={(e) => updateOverlay('color', e.target.value)}
                         placeholder="#000000"
                         className="flex-1"
@@ -473,13 +495,13 @@ export function HeroEditor({
                   </div>
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">
-                      Opacity ({content.overlay.opacity}%)
+                      Opacity ({normalizedContent.overlay.opacity}%)
                     </label>
                     <input
                       type="range"
                       min="0"
                       max="100"
-                      value={content.overlay.opacity}
+                      value={normalizedContent.overlay.opacity}
                       onChange={(e) => updateOverlay('opacity', parseInt(e.target.value))}
                       className="w-full"
                     />
@@ -506,7 +528,7 @@ export function HeroEditor({
                 <label className="text-sm font-medium mb-2 block">Title Size</label>
                 <select
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={content.style.titleSize}
+                  value={normalizedContent.style.titleSize}
                   onChange={(e) => updateStyle('titleSize', e.target.value)}
                 >
                   {titleSizeOptions.map(option => (
@@ -522,12 +544,12 @@ export function HeroEditor({
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
-                    value={content.style.backgroundColor}
+                    value={normalizedContent.style.backgroundColor}
                     onChange={(e) => updateStyle('backgroundColor', e.target.value)}
                     className="w-10 h-10 rounded border"
                   />
                   <Input
-                    value={content.style.backgroundColor}
+                    value={normalizedContent.style.backgroundColor}
                     onChange={(e) => updateStyle('backgroundColor', e.target.value)}
                     placeholder="#1f2937"
                     className="flex-1"
@@ -542,12 +564,12 @@ export function HeroEditor({
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
-                    value={content.style.titleColor}
+                    value={normalizedContent.style.titleColor}
                     onChange={(e) => updateStyle('titleColor', e.target.value)}
                     className="w-10 h-10 rounded border"
                   />
                   <Input
-                    value={content.style.titleColor}
+                    value={normalizedContent.style.titleColor}
                     onChange={(e) => updateStyle('titleColor', e.target.value)}
                     placeholder="#ffffff"
                     className="flex-1"
@@ -560,12 +582,12 @@ export function HeroEditor({
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
-                    value={content.style.descriptionColor}
+                    value={normalizedContent.style.descriptionColor}
                     onChange={(e) => updateStyle('descriptionColor', e.target.value)}
                     className="w-10 h-10 rounded border"
                   />
                   <Input
-                    value={content.style.descriptionColor}
+                    value={normalizedContent.style.descriptionColor}
                     onChange={(e) => updateStyle('descriptionColor', e.target.value)}
                     placeholder="#e5e7eb"
                     className="flex-1"
