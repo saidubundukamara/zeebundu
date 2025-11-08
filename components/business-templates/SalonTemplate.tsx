@@ -616,13 +616,21 @@ export function SalonTemplate({ business, content, template, preview = false }: 
         {galleryContent.images.slice(0, 6).map((item: any, index: number) => (
           <div
             key={index}
-            className="overflow-hidden bg-white rounded-3xl shadow-lg transition-shadow duration-300 hover:shadow-xl"
+            className="overflow-hidden bg-white rounded-2xl shadow-lg transition-shadow duration-300 hover:shadow-xl"
+            style={{
+              border: '2px solid #f3e6dd', // Brown border color matching the page theme
+              borderRadius: '1rem' // 16px border radius
+            }}
           >
-            <div className="relative aspect-[4/3]">
+            <div className="relative aspect-[4/3] p-2">
               <img
                 src={item.url || item}
                 alt={item.alt || item.caption || `Gallery image ${index + 1}`}
-                className="object-contain w-full h-full bg-gray-50"
+                className="object-cover w-full h-full"
+                style={{
+                  borderRadius: '0.75rem', // 12px border radius for the actual image
+                  border: 'none'
+                }}
               />
             </div>
 
