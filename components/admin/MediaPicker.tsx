@@ -250,14 +250,41 @@ export function MediaPicker({
                   <div className="mb-6">
                     <h3 className="text-sm font-semibold mb-3">Selected Preview:</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                      {selected.map((item) => (
+                      {selected.map((item) => {
+                        // Helper to get URL string safely
+                        const getItemUrl = (urlValue: any): string => {
+                          if (!urlValue) return '';
+                          if (typeof urlValue === 'string') return urlValue;
+                          if (typeof urlValue === 'object') {
+                            return urlValue.url || urlValue.href || urlValue.src || '';
+                          }
+                          return String(urlValue);
+                        };
+
+                        const itemUrl = getItemUrl(item.url);
+                        const itemThumbnail = getItemUrl(item.thumbnailUrl);
+                        const isImage = item.mimeType?.toLowerCase().startsWith('image/') || 
+                          (itemUrl && /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif|ico)(\?|$)/i.test(itemUrl)) ||
+                          (!item.mimeType?.toLowerCase().startsWith('video/') && itemUrl);
+                        
+                        return (
                         <div key={item._id?.toString()} className="relative group">
                           <div className="aspect-square rounded-lg overflow-hidden border-2 border-blue-500 bg-gray-100">
-                            {item.mimeType.startsWith('image/') ? (
+                            {isImage && (itemThumbnail || itemUrl) ? (
                               <img
-                                src={item.thumbnailUrl || item.url}
-                                alt={item.alt || item.originalName}
+                                src={itemThumbnail || itemUrl}
+                                alt={item.alt || item.originalName || 'Selected media'}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Try fallback to original URL if thumbnail fails
+                                  const img = e.currentTarget;
+                                  if (itemThumbnail && img.src !== itemUrl) {
+                                    img.src = itemUrl;
+                                  } else {
+                                    img.style.display = 'none';
+                                    img.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100"><svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"/><path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"/></svg></div>';
+                                  }
+                                }}
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-purple-100">
@@ -281,7 +308,8 @@ export function MediaPicker({
                             <Check className="w-4 h-4" />
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -351,7 +379,7 @@ export function MediaPicker({
 
 // MediaPreview component for showing selected media
 interface MediaPreviewProps {
-  media: MediaAsset | null;
+  media: MediaAsset | string | { url?: string; thumbnailUrl?: string; mimeType?: string; originalName?: string; alt?: string; dimensions?: any; [key: string]: any } | null;
   onRemove?: () => void;
   onSelect?: () => void;
   placeholder?: string;
@@ -368,12 +396,42 @@ export function MediaPreview({
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 
+  // Normalize media object to handle different formats (URL string, partial object, full MediaAsset)
+  const normalizedMedia = React.useMemo(() => {
+    if (!media) return null;
+    
+    // If it's a string, convert to MediaAsset-like object
+    if (typeof media === 'string') {
+      const urlStr = media;
+      return {
+        url: urlStr,
+        thumbnailUrl: urlStr,
+        mimeType: /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?|$)/i.test(urlStr) ? 'image/jpeg' : 'video/mp4',
+        originalName: urlStr.split('/').pop() || 'media',
+        alt: urlStr.split('/').pop() || 'media',
+        dimensions: undefined
+      };
+    }
+    
+    // If it's an object, ensure it has required properties
+    const mediaObj = media as any;
+    const url = mediaObj.url || mediaObj.src || mediaObj.image || '';
+    return {
+      url: url,
+      thumbnailUrl: mediaObj.thumbnailUrl || mediaObj.thumbnail || url,
+      mimeType: mediaObj.mimeType || mediaObj.type || '',
+      originalName: mediaObj.originalName || mediaObj.name || mediaObj.filename || (typeof url === 'string' ? url.split('/').pop() : 'media') || 'media',
+      alt: mediaObj.alt || mediaObj.originalName || mediaObj.name || mediaObj.filename || (typeof url === 'string' ? url.split('/').pop() : 'media') || 'media',
+      dimensions: mediaObj.dimensions
+    };
+  }, [media]);
+
   React.useEffect(() => {
-    if (media) {
+    if (normalizedMedia) {
       setImageLoading(true);
       setImageError(false);
     }
-  }, [media?.url, media?.thumbnailUrl]);
+  }, [normalizedMedia?.url, normalizedMedia?.thumbnailUrl]);
 
   const handleImageLoad = () => {
     setImageLoading(false);
@@ -385,7 +443,7 @@ export function MediaPreview({
     setImageError(true);
   };
 
-  if (!media) {
+  if (!normalizedMedia || !normalizedMedia.url) {
     return (
       <div 
         className={`${className} border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-gray-400 transition-colors`}
@@ -403,15 +461,19 @@ export function MediaPreview({
   }
 
   const getImageSrc = () => {
-    if (media.thumbnailUrl && !imageError) {
-      return media.thumbnailUrl;
+    if (normalizedMedia.thumbnailUrl && !imageError) {
+      return normalizedMedia.thumbnailUrl;
     }
-    return media.url;
+    return normalizedMedia.url;
   };
+
+  // Safely check if media is an image
+  const isImage = normalizedMedia.mimeType?.startsWith('image/') || 
+    (normalizedMedia.url && /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?|$)/i.test(normalizedMedia.url));
 
   return (
     <div className={`${className} relative rounded-lg overflow-hidden border group bg-gray-50`}>
-      {media.mimeType.startsWith('image/') ? (
+      {isImage ? (
         <>
           {imageLoading && (
             <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
@@ -424,7 +486,7 @@ export function MediaPreview({
               <div className="text-center">
                 <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                 <p className="text-sm text-gray-500">Image unavailable</p>
-                <p className="text-xs text-gray-400">{media.originalName}</p>
+                <p className="text-xs text-gray-400">{normalizedMedia.originalName}</p>
               </div>
             </div>
           )}
@@ -432,7 +494,7 @@ export function MediaPreview({
           {!imageError && (
             <img
               src={getImageSrc()}
-              alt={media.alt || media.originalName}
+              alt={normalizedMedia.alt || normalizedMedia.originalName}
               className={`w-full h-full object-cover transition-opacity duration-200 ${
                 imageLoading ? 'opacity-0' : 'opacity-100'
               }`}
@@ -449,7 +511,7 @@ export function MediaPreview({
                 <path d="M2 6a2 2 0 012-2h6l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
               </svg>
             </div>
-            <p className="text-sm font-medium">{media.originalName}</p>
+            <p className="text-sm font-medium">{normalizedMedia.originalName}</p>
           </div>
         </div>
       )}
@@ -484,9 +546,9 @@ export function MediaPreview({
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
-        <p className="text-white text-sm font-medium truncate">{media.originalName}</p>
+        <p className="text-white text-sm font-medium truncate">{normalizedMedia.originalName}</p>
         <p className="text-gray-300 text-xs">
-          {media.dimensions ? `${media.dimensions.width} × ${media.dimensions.height}` : 'Video'}
+          {normalizedMedia.dimensions ? `${normalizedMedia.dimensions.width} × ${normalizedMedia.dimensions.height}` : 'Video'}
         </p>
       </div>
     </div>
